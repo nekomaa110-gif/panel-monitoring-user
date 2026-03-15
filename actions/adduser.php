@@ -1,6 +1,5 @@
 <?php
-require "db.php";
-
+require "../config/db.php";
 $username = $_POST['username'] ?? '';
 $password = $_POST['password'] ?? '';
 $hari     = $_POST['hari'] ?? 30;

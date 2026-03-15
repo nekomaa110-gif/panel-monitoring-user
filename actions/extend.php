@@ -1,6 +1,5 @@
 <?php
-require "db.php";
-
+require "../config/db.php";
 $user = $_GET['user'] ?? '';
 $hari = $_POST['hari'] ?? '';
 

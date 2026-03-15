@@ -1,5 +1,5 @@
 <?php
-require "db.php";
+require "config/db.php";
 
 $search = $_GET['search'] ?? "";
 $page   = $_GET['page'] ?? 1;
@@ -48,6 +48,7 @@ LIMIT $start,$limit
 <!DOCTYPE html>
 
 <html>
+
 <head>
 
 <title>Panel Radius</title>
@@ -64,11 +65,13 @@ LIMIT $start,$limit
 
 <div class="d-flex justify-content-between mb-3">
 
-<a href="adduser.php" class="btn btn-success">+ Tambah User</a>
+<a href="actions/adduser.php" class="btn btn-success">+ Tambah User</a>
 
 <form method="GET" class="d-flex">
 
-<input type="text" name="search" class="form-control me-2" placeholder="Cari user..." value="<?php echo $search; ?>">
+<input type="text" name="search" class="form-control me-2"
+placeholder="Cari user..."
+value="<?php echo $search; ?>">
 
 <button class="btn btn-primary">Cari</button>
 
@@ -93,14 +96,14 @@ LIMIT $start,$limit
 
 <tbody>
 
-<?php while($r=$q->fetch_assoc()){
+<?php while($r = $q->fetch_assoc()){
 
 $exp_string = $r['expiration'];
 $exp = strtotime($exp_string);
 $now = time();
 
-$status="AKTIF";
-$badge="success";
+$status = "AKTIF";
+$badge  = "success";
 
 if($r['profile']=="daloRADIUS-Disabled-Users"){
 $status="NONAKTIF";
@@ -112,7 +115,6 @@ $status="EXPIRED";
 $badge="warning";
 }
 }
-
 ?>
 
 <tr class="text-center">
@@ -130,21 +132,21 @@ $badge="warning";
 
 <td>
 
-<a href="extend.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-primary">
-Perpanjang
-</a>
+<a href="actions/extend.php?user=<?php echo $r['username']; ?>"
+class="btn btn-sm btn-primary">
+Perpanjang </a>
 
 <?php if($r['profile']=="daloRADIUS-Disabled-Users"){ ?>
 
-<a href="enable.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-success">
-Aktifkan
-</a>
+<a href="actions/enable.php?user=<?php echo $r['username']; ?>"
+class="btn btn-sm btn-success">
+Aktifkan </a>
 
 <?php } else { ?>
 
-<a href="disable.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-danger">
-Nonaktifkan
-</a>
+<a href="actions/disable.php?user=<?php echo $r['username']; ?>"
+class="btn btn-sm btn-danger">
+Nonaktifkan </a>
 
 <?php } ?>
 
@@ -163,7 +165,8 @@ Nonaktifkan
 <?php
 for($i=1;$i<=$total_page;$i++){
 
-echo "<a class='btn btn-sm btn-secondary me-1' href='?page=$i&search=$search'>$i</a>";
+echo "<a class='btn btn-sm btn-secondary me-1'
+href='?page=$i&search=$search'>$i</a>";
 
 }
 ?>
