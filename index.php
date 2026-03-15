@@ -61,15 +61,7 @@ LIMIT 20
 <body>
 
     <!-- SIDEBAR -->
-
-    <div class="sidebar">
-
-        <h4>ZERO NET</h4>
-
-        <a href="index.php">Dashboard</a> <a href="users.php">Pelanggan</a> <a href="adduser.php">Tambah User</a> <a href="logout.php">Logout</a>
-
-    </div>
-
+    <?php include "sidebar.php"; ?>
     <!-- NAVBAR -->
 
     <nav class="navbar bg-white shadow-sm">

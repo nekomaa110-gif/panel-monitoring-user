@@ -57,23 +57,11 @@ ORDER BY u.username
 
 <body>
 
-    <!-- SIDEBAR -->
+    <?php include "sidebar.php"; ?>
 
-    <div class="sidebar">
-
-        <h4>ZERO NET</h4>
-
-        <a href="index.php">Dashboard</a> <a href="users.php">Pelanggan</a> <a href="adduser.php">Tambah User</a> <a href="logout.php">Logout</a>
-
-    </div>
-
-    <!-- NAVBAR -->
-
-    <nav class="navbar navbar-light bg-white shadow-sm">
-        <b>Kelola Pelanggan</b>
+    <nav class="navbar navbar-light bg-white shadow-sm px-4">
+        <b>Pelanggan</b>
     </nav>
-
-    <!-- CONTENT -->
 
     <div class="content">
 
@@ -84,34 +72,52 @@ ORDER BY u.username
             <ul class="nav nav-tabs">
 
                 <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "") echo "active"; ?>" href="users.php">Semua</a>
+                    <a class="nav-link <?php if ($filter == "") echo "active"; ?>"
+                        href="users.php?search=<?php echo $search; ?>">
+                        Semua
+                    </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "online") echo "active"; ?>" href="users.php?filter=online">Online</a>
+                    <a class="nav-link <?php if ($filter == "online") echo "active"; ?>"
+                        href="users.php?filter=online&search=<?php echo $search; ?>">
+                        Online
+                    </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>" href="users.php?filter=expired">Expired</a>
+                    <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>"
+                        href="users.php?filter=expired&search=<?php echo $search; ?>">
+                        Expired
+                    </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>" href="users.php?filter=disabled">Disabled</a>
+                    <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>"
+                        href="users.php?filter=disabled&search=<?php echo $search; ?>">
+                        Disabled
+                    </a>
                 </li>
 
             </ul>
 
             <form method="GET" class="d-flex">
 
-                <input type="text" name="search" class="form-control me-2" placeholder="Cari user..." value="<?php echo $search; ?>">
+                <input type="hidden" name="filter" value="<?php echo $filter; ?>">
 
-                <button class="btn btn-primary">Cari</button>
+                <input type="text"
+                    name="search"
+                    class="form-control me-2"
+                    placeholder="Cari user..."
+                    value="<?php echo $search; ?>">
+
+                <button class="btn btn-primary">
+                    Cari
+                </button>
 
             </form>
 
         </div>
-
-        <!-- TABLE -->
 
         <div class="table-scroll">
 
@@ -178,15 +184,15 @@ ORDER BY u.username
 
                                 <?php if ($r['profile'] == "daloRADIUS-Disabled-Users") { ?>
 
-                                    <a href="actions/enable.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-success">
-                                        Aktifkan
-                                    </a>
+                                    <a href="actions/enable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                        class="btn btn-sm btn-success">
+                                        Aktifkan </a>
 
                                 <?php } else { ?>
 
-                                    <a href="actions/disable.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-danger">
-                                        Nonaktifkan
-                                    </a>
+                                    <a href="actions/disable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                        class="btn btn-sm btn-danger">
+                                        Nonaktifkan </a>
 
                                 <?php } ?>
 

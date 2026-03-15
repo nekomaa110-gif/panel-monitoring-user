@@ -1,18 +1,26 @@
 <?php
 require "../config/db.php";
 
-$user = $_GET['user'] ?? '';
+$user   = $_GET['user'] ?? '';
+$search = $_GET['search'] ?? '';
+$filter = $_GET['filter'] ?? '';
 
 if ($user == "") {
-    die("User tidak ditemukan");
+    die("username kosong");
 }
 
 /* hapus group lama */
-$conn->query("DELETE FROM radusergroup WHERE username='$user'");
+$conn->query("
+DELETE FROM radusergroup
+WHERE username='$user'
+");
 
-/* masukkan ke group disable */
-$conn->query("INSERT INTO radusergroup (username,groupname,priority)
-VALUES ('$user','daloRADIUS-Disabled-Users',0)");
+/* masukkan ke group disabled */
+$conn->query("
+INSERT INTO radusergroup (username,groupname,priority)
+VALUES ('$user','daloRADIUS-Disabled-Users',0)
+");
 
-header("Location: ../users.php");
+/* kembali ke halaman sebelumnya */
+header("Location: ../users.php?search=$search&filter=$filter");
 exit;

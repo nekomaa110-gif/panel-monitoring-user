@@ -1,6 +1,9 @@
 <?php
 require "../config/db.php";
-$user = $_GET['user'] ?? '';
+
+$user   = $_GET['user'] ?? '';
+$search = $_GET['search'] ?? '';
+$filter = $_GET['filter'] ?? '';
 
 if ($user == "") {
     die("username kosong");
@@ -18,5 +21,6 @@ INSERT INTO radusergroup (username,groupname,priority)
 VALUES ('$user','Radius-Member',0)
 ");
 
-header("Location: users.php");
+/* kembali ke halaman sebelumnya */
+header("Location: ../users.php?search=$search&filter=$filter");
 exit;

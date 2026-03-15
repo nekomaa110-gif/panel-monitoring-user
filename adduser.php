@@ -49,14 +49,7 @@ VALUES ('$username','$profile',0)
 </head>
 
 <body>
-
-    <div class="sidebar">
-
-        <h4>ZERO NET</h4>
-
-        <a href="index.php">Dashboard</a> <a href="users.php">Pelanggan</a> <a href="adduser.php">Tambah User</a> <a href="logout.php">Logout</a>
-
-    </div>
+    <?php include "sidebar.php"; ?>
 
     <nav class="navbar navbar-light bg-white shadow-sm px-4">
         <b>Tambah User</b>
