@@ -1,175 +1,249 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors',1);
+require "auth.php";
+require "config/db.php";
 
-$host="localhost";
-$user="radius";
-$pass="radius123";
-$db="radius";
+/* TOTAL USER */
+$total = $conn->query("
+SELECT COUNT(DISTINCT username) as t
+FROM radcheck
+")->fetch_assoc()['t'];
 
-$conn=new mysqli($host,$user,$pass,$db);
-if($conn->connect_error){die("DB error");}
+/* USER EXPIRED */
+$expired = $conn->query("
+SELECT COUNT(*) as t FROM radcheck
+WHERE attribute='Expiration'
+AND STR_TO_DATE(value,'%d %b %Y %H:%i') < NOW()
+")->fetch_assoc()['t'];
 
-function addUser($conn,$u,$p,$days){
-$exp=date("d M Y 23:59",strtotime("+$days days"));
+/* USER DISABLED */
+$disabled = $conn->query("
+SELECT COUNT(*) as t FROM radusergroup
+WHERE groupname='daloRADIUS-Disabled-Users'
+")->fetch_assoc()['t'];
 
-$conn->query("INSERT INTO radcheck(username,attribute,op,value)
-VALUES('$u','Cleartext-Password',':=','$p')");
+/* USER ONLINE */
+$online = $conn->query("
+SELECT COUNT(*) as t
+FROM radacct
+WHERE acctstoptime IS NULL
+")->fetch_assoc()['t'];
 
-$conn->query("INSERT INTO radcheck(username,attribute,op,value)
-VALUES('$u','Expiration',':=','$exp')");
+/* USER ONLINE LIST */
+$online_list = $conn->query("
+SELECT username,framedipaddress,acctstarttime
+FROM radacct
+WHERE acctstoptime IS NULL
+ORDER BY acctstarttime DESC
+");
 
-$conn->query("INSERT INTO radusergroup(username,groupname,priority)
-VALUES('$u','Radius-Member',0)");
-}
-
-function disableUser($conn,$u){
-$conn->query("UPDATE radusergroup
-SET groupname='daloRADIUS-Disabled-Users'
-WHERE username='$u'");
-}
-
-function extendDays($conn,$u,$days){
-$q=$conn->query("SELECT value FROM radcheck
-WHERE username='$u' AND attribute='Expiration'");
-$r=$q->fetch_assoc();
-
-$old=strtotime($r['value']);
-$new=date("d M Y 23:59",$old + ($days*86400));
-
-$conn->query("UPDATE radcheck
-SET value='$new'
-WHERE username='$u' AND attribute='Expiration'");
-}
-
-function extendManual($conn,$u,$date){
-$conn->query("UPDATE radcheck
-SET value='$date'
-WHERE username='$u' AND attribute='Expiration'");
-}
-
-if(isset($_POST['add'])){
-addUser($conn,$_POST['user'],$_POST['pass'],$_POST['days']);
-}
-
-if(isset($_POST['disable'])){
-disableUser($conn,$_POST['user']);
-}
-
-if(isset($_POST['extend'])){
-extendDays($conn,$_POST['user'],$_POST['days']);
-}
-
-if(isset($_POST['manual'])){
-extendManual($conn,$_POST['user'],$_POST['date']);
-}
+/* LOGIN TERAKHIR */
+$log = $conn->query("
+SELECT username,nasipaddress,acctstarttime
+FROM radacct
+ORDER BY acctstarttime DESC
+LIMIT 20
+");
 ?>
 
+<!DOCTYPE html>
+
 <html>
+
 <head>
-<title>ZERO NET PANEL</title>
 
-<style>
+    <title>ZERO NET PANEL</title>
 
-body{
-font-family:Arial;
-background:#f4f6f9;
-margin:40px;
-}
-
-.panel{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
-box-shadow:0 0 8px rgba(0,0,0,0.1);
-}
-
-input{
-padding:6px;
-margin:5px 0;
-width:200px;
-}
-
-button{
-padding:8px 14px;
-background:#3498db;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-button:hover{
-background:#2980b9;
-}
-
-h1{
-margin-bottom:30px;
-}
-
-</style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/style.css" rel="stylesheet">
 
 </head>
 
 <body>
 
-<h1>ZERO NET MINI PANEL</h1>
+    <!-- SIDEBAR -->
 
-<div class="panel">
-<h3>Tambah User</h3>
+    <div class="sidebar">
 
-<form method="post">
+        <h4>ZERO NET</h4>
 
-username<br> <input name="user"><br>
+        <a href="index.php">Dashboard</a> <a href="users.php">Pelanggan</a> <a href="adduser.php">Tambah User</a> <a href="logout.php">Logout</a>
 
-password<br> <input name="pass"><br>
+    </div>
 
-masa aktif (hari)<br> <input name="days" value="30"><br><br>
+    <!-- NAVBAR -->
 
-<button name="add">buat user</button>
+    <nav class="navbar bg-white shadow-sm">
 
-</form>
-</div>
+        <div class="container-fluid">
 
-<div class="panel">
-<h3>Disable User</h3>
+            <b>Dashboard</b>
 
-<form method="post">
+        </div>
 
-username<br> <input name="user"><br><br>
+    </nav>
 
-<button name="disable">disable</button>
+    <!-- CONTENT -->
 
-</form>
-</div>
+    <div class="content">
 
-<div class="panel">
-<h3>Perpanjang Masa Aktif</h3>
+        <div class="row g-4 text-center">
 
-<form method="post">
+            <a href="users.php" class="col-md-3 text-decoration-none">
 
-username<br> <input name="user"><br>
+                <div class="card dashboard-card">
 
-tambah hari<br> <input name="days" value="30"><br><br>
+                    <div class="card-body">
 
-<button name="extend">tambah hari</button>
+                        <h3 class="text-primary"><?php echo $total ?></h3>
 
-</form>
+                        Total User
 
-<hr>
+                    </div>
 
-<form method="post">
+                </div>
 
-username<br> <input name="user"><br>
+            </a>
 
-tanggal manual<br> <input name="date" placeholder="20 Apr 2026 23:59"><br><br>
+            <a href="users.php?filter=online" class="col-md-3 text-decoration-none">
 
-<button name="manual">set manual</button>
+                <div class="card dashboard-card">
 
-</form>
+                    <div class="card-body">
 
-</div>
+                        <h3 class="text-success"><?php echo $online ?></h3>
+
+                        User Online
+
+                    </div>
+
+                </div>
+
+            </a>
+
+            <a href="users.php?filter=expired" class="col-md-3 text-decoration-none">
+
+                <div class="card dashboard-card">
+
+                    <div class="card-body">
+
+                        <h3 class="text-warning"><?php echo $expired ?></h3>
+
+                        Expired
+
+                    </div>
+
+                </div>
+
+            </a>
+
+            <a href="users.php?filter=disabled" class="col-md-3 text-decoration-none">
+
+                <div class="card dashboard-card">
+
+                    <div class="card-body">
+
+                        <h3 class="text-danger"><?php echo $disabled ?></h3>
+
+                        Disabled
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+        <div class="row mt-5">
+
+            <div class="col-md-6">
+
+                <h5>User Online Sekarang</h5>
+
+                <div class="table-scroll">
+
+                    <table class="table table-striped">
+
+                        <thead class="table-dark">
+
+                            <tr>
+
+                                <th>User</th>
+                                <th>IP</th>
+                                <th>Login Time</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <?php while ($o = $online_list->fetch_assoc()) { ?>
+
+                                <tr>
+
+                                    <td><?php echo $o['username'] ?></td>
+                                    <td><?php echo $o['framedipaddress'] ?></td>
+                                    <td><?php echo $o['acctstarttime'] ?></td>
+
+                                </tr>
+
+                            <?php } ?>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <h5>Login Terakhir</h5>
+
+                <div class="table-scroll">
+
+                    <table class="table table-striped">
+
+                        <thead class="table-dark">
+
+                            <tr>
+
+                                <th>User</th>
+                                <th>NAS</th>
+                                <th>Login Time</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <?php while ($r = $log->fetch_assoc()) { ?>
+
+                                <tr>
+
+                                    <td><?php echo $r['username'] ?></td>
+                                    <td><?php echo $r['nasipaddress'] ?></td>
+                                    <td><?php echo $r['acctstarttime'] ?></td>
+
+                                </tr>
+
+                            <?php } ?>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </body>
+
 </html>

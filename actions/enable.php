@@ -2,8 +2,8 @@
 require "../config/db.php";
 $user = $_GET['user'] ?? '';
 
-if($user==""){
-die("username kosong");
+if ($user == "") {
+    die("username kosong");
 }
 
 /* hapus group lama */
@@ -20,4 +20,3 @@ VALUES ('$user','Radius-Member',0)
 
 header("Location: users.php");
 exit;
-?>

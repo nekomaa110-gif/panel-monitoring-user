@@ -1,25 +1,23 @@
 <?php
+require "auth.php";
 require "config/db.php";
 
 $search = $_GET['search'] ?? "";
-$page   = $_GET['page'] ?? 1;
+$filter = $_GET['filter'] ?? "";
 
-$limit = 15;
-$start = ($page - 1) * $limit;
-
-$total_q = $conn->query("
-SELECT COUNT(*) as total FROM
-(
-SELECT username FROM radcheck
-UNION
-SELECT username FROM radusergroup
-) u
+/* USER ONLINE */
+$onlineUsers = [];
+$online_q = $conn->query("
+SELECT username
+FROM radacct
+WHERE acctstoptime IS NULL
 ");
 
-$total_row = $total_q->fetch_assoc();
-$total_user = $total_row['total'];
-$total_page = ceil($total_user / $limit);
+while ($o = $online_q->fetch_assoc()) {
+    $onlineUsers[] = $o['username'];
+}
 
+/* AMBIL DATA USER */
 $q = $conn->query("
 SELECT
 u.username,
@@ -41,7 +39,6 @@ WHERE u.username LIKE '%$search%'
 
 GROUP BY u.username
 ORDER BY u.username
-LIMIT $start,$limit
 ");
 ?>
 
@@ -51,129 +48,162 @@ LIMIT $start,$limit
 
 <head>
 
-<title>Panel Radius</title>
+    <title>Kelola Pelanggan</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/style.css" rel="stylesheet">
 
 </head>
 
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
+    <!-- SIDEBAR -->
 
-<h3 class="text-center mb-4">Panel Pelanggan Hotspot</h3>
+    <div class="sidebar">
 
-<div class="d-flex justify-content-between mb-3">
+        <h4>ZERO NET</h4>
 
-<a href="actions/adduser.php" class="btn btn-success">+ Tambah User</a>
+        <a href="index.php">Dashboard</a> <a href="users.php">Pelanggan</a> <a href="adduser.php">Tambah User</a> <a href="logout.php">Logout</a>
 
-<form method="GET" class="d-flex">
+    </div>
 
-<input type="text" name="search" class="form-control me-2"
-placeholder="Cari user..."
-value="<?php echo $search; ?>">
+    <!-- NAVBAR -->
 
-<button class="btn btn-primary">Cari</button>
+    <nav class="navbar navbar-light bg-white shadow-sm">
+        <b>Kelola Pelanggan</b>
+    </nav>
 
-</form>
+    <!-- CONTENT -->
 
-</div>
+    <div class="content">
 
-<table class="table table-striped table-hover">
+        <h3 class="mb-4">Daftar Pelanggan</h3>
 
-<thead class="table-dark text-center">
+        <div class="d-flex justify-content-between mb-3">
 
-<tr>
-<th>Username</th>
-<th>Password</th>
-<th>Profile</th>
-<th>Expiration</th>
-<th>Status</th>
-<th>Tindakan</th>
-</tr>
+            <ul class="nav nav-tabs">
 
-</thead>
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter == "") echo "active"; ?>" href="users.php">Semua</a>
+                </li>
 
-<tbody>
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter == "online") echo "active"; ?>" href="users.php?filter=online">Online</a>
+                </li>
 
-<?php while($r = $q->fetch_assoc()){
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>" href="users.php?filter=expired">Expired</a>
+                </li>
 
-$exp_string = $r['expiration'];
-$exp = strtotime($exp_string);
-$now = time();
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>" href="users.php?filter=disabled">Disabled</a>
+                </li>
 
-$status = "AKTIF";
-$badge  = "success";
+            </ul>
 
-if($r['profile']=="daloRADIUS-Disabled-Users"){
-$status="NONAKTIF";
-$badge="danger";
-}
-elseif(!empty($exp_string)){
-if($exp!==false && $exp<$now){
-$status="EXPIRED";
-$badge="warning";
-}
-}
-?>
+            <form method="GET" class="d-flex">
 
-<tr class="text-center">
+                <input type="text" name="search" class="form-control me-2" placeholder="Cari user..." value="<?php echo $search; ?>">
 
-<td><?php echo $r['username']; ?></td>
-<td><?php echo $r['password']; ?></td>
-<td><?php echo $r['profile']; ?></td>
-<td><?php echo $r['expiration']; ?></td>
+                <button class="btn btn-primary">Cari</button>
 
-<td>
-<span class="badge bg-<?php echo $badge; ?>">
-<?php echo $status; ?>
-</span>
-</td>
+            </form>
 
-<td>
+        </div>
 
-<a href="actions/extend.php?user=<?php echo $r['username']; ?>"
-class="btn btn-sm btn-primary">
-Perpanjang </a>
+        <!-- TABLE -->
 
-<?php if($r['profile']=="daloRADIUS-Disabled-Users"){ ?>
+        <div class="table-scroll">
 
-<a href="actions/enable.php?user=<?php echo $r['username']; ?>"
-class="btn btn-sm btn-success">
-Aktifkan </a>
+            <table class="table table-striped table-hover text-center">
 
-<?php } else { ?>
+                <thead class="table-dark">
 
-<a href="actions/disable.php?user=<?php echo $r['username']; ?>"
-class="btn btn-sm btn-danger">
-Nonaktifkan </a>
+                    <tr>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>Profile</th>
+                        <th>Masa Aktif</th>
+                        <th>Status</th>
+                        <th>Tindakan</th>
+                    </tr>
 
-<?php } ?>
+                </thead>
 
-</td>
+                <tbody>
 
-</tr>
+                    <?php while ($r = $q->fetch_assoc()) {
 
-<?php } ?>
+                        $exp_string = $r['expiration'];
+                        $exp = strtotime($exp_string);
+                        $now = time();
 
-</tbody>
+                        $status = "AKTIF";
+                        $badge = "success";
 
-</table>
+                        if ($r['profile'] == "daloRADIUS-Disabled-Users") {
+                            $status = "NONAKTIF";
+                            $badge = "danger";
+                        } elseif (!empty($exp_string)) {
+                            if ($exp !== false && $exp < $now) {
+                                $status = "EXPIRED";
+                                $badge = "warning";
+                            }
+                        }
 
-<div class="text-center mt-4">
+                        $isOnline = in_array($r['username'], $onlineUsers);
 
-<?php
-for($i=1;$i<=$total_page;$i++){
+                        /* FILTER */
 
-echo "<a class='btn btn-sm btn-secondary me-1'
-href='?page=$i&search=$search'>$i</a>";
+                        if ($filter == "online" && (!$isOnline || $status == "NONAKTIF")) continue;
+                        if ($filter == "disabled" && $status != "NONAKTIF") continue;
+                        if ($filter == "expired" && $status != "EXPIRED") continue;
 
-}
-?>
+                    ?>
 
-</div>
+                        <tr>
 
-</div>
+                            <td><?php echo $r['username']; ?></td>
+                            <td><?php echo $r['password']; ?></td>
+                            <td><?php echo $r['profile']; ?></td>
+                            <td><?php echo $r['expiration']; ?></td>
+
+                            <td>
+                                <span class="badge bg-<?php echo $badge; ?>">
+                                    <?php echo $status; ?>
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <?php if ($r['profile'] == "daloRADIUS-Disabled-Users") { ?>
+
+                                    <a href="actions/enable.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-success">
+                                        Aktifkan
+                                    </a>
+
+                                <?php } else { ?>
+
+                                    <a href="actions/disable.php?user=<?php echo $r['username']; ?>" class="btn btn-sm btn-danger">
+                                        Nonaktifkan
+                                    </a>
+
+                                <?php } ?>
+
+                            </td>
+
+                        </tr>
+
+                    <?php } ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
 </body>
+
 </html>

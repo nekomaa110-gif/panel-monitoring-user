@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #f4f6f9;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 100%;
+    background: #0f1b2d;
+    padding: 20px;
+}
+
+.sidebar h4 {
+    color: white;
+    margin-bottom: 30px;
+}
+
+.sidebar a {
+    display: block;
+    color: #cbd5e1;
+    text-decoration: none;
+    margin-bottom: 15px;
+}
+
+.sidebar a:hover {
+    color: white;
+}
+
+
+/* NAVBAR */
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 200px;
+    right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    z-index: 1000;
+}
+
+
+/* CONTENT */
+
+.content {
+    margin-left: 200px;
+    margin-top: 70px;
+    padding: 30px;
+}
+
+
+/* DASHBOARD CARD */
+
+.dashboard-card {
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+
+/* TABLE SCROLL */
+
+.table-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+}
+
+/* header tabel tetap */
+
+.table-scroll thead th {
+    position: sticky;
+    top: 0;
+    background: #212529;
+    /* warna sama dengan table-dark */
+    color: white;
+    z-index: 10;
+}
