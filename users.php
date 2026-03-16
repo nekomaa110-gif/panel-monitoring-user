@@ -47,9 +47,7 @@ ORDER BY u.username
 <html>
 
 <head>
-
-    <title>Kelola Pelanggan</title>
-
+    <title>Pelanggan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
 
@@ -209,6 +207,8 @@ ORDER BY u.username
         </div>
 
     </div>
+
+
 
 </body>
 

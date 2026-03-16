@@ -16,9 +16,8 @@ if (file_exists($logfile)) {
 <html>
 
 <head>
-
-    <title>Log User</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
 
@@ -133,6 +132,7 @@ if (file_exists($logfile)) {
         </div>
 
     </div>
+
 
 </body>
 

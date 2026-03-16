@@ -50,9 +50,7 @@ LIMIT 20
 <html>
 
 <head>
-
-    <title>ZERO NET PANEL</title>
-
+    <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
 
@@ -63,7 +61,6 @@ LIMIT 20
     <!-- SIDEBAR -->
     <?php include "sidebar.php"; ?>
     <!-- NAVBAR -->
-
     <nav class="navbar bg-white shadow-sm">
 
         <div class="container-fluid">
@@ -235,6 +232,8 @@ LIMIT 20
         </div>
 
     </div>
+
+   
 
 </body>
 
