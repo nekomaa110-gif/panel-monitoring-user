@@ -127,13 +127,3 @@ body {
     color: #fff;
     padding-left: 16px;
 }
-
-.copyright {
-    position: absolute;
-    bottom: -5px;
-    width: 100%;
-    text-align: left;
-    font-style: italic;
-    font-size: 12px;
-    color: #cfd7e3;
-}
