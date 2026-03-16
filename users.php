@@ -65,6 +65,11 @@ ORDER BY u.username
         .table td {
             vertical-align: middle;
         }
+
+        .badge {
+            font-size: 14px;
+            padding: 6px 10px;
+        }
     </style>
 
 </head>
@@ -164,23 +169,23 @@ ORDER BY u.username
                         $now = time();
 
                         $status = "AKTIF";
-                        $badge = "success";
 
                         if ($r['profile'] == "daloRADIUS-Disabled-Users") {
                             $status = "NONAKTIF";
-                            $badge = "danger";
                         } elseif (!empty($exp_string) && $exp < $now) {
                             $status = "EXPIRED";
-                            $badge = "warning";
                         }
 
                         $isOnline = in_array($r['username'], $onlineUsers);
 
                         /* FILTER TAB */
 
-                        if ($filter == "online" && !$isOnline) continue;
-                        if ($filter == "expired" && $status != "EXPIRED") continue;
-                        if ($filter == "disabled" && $status != "NONAKTIF") continue;
+                        if ($search == "") {
+
+                            if ($filter == "online" && !$isOnline) continue;
+                            if ($filter == "expired" && $status != "EXPIRED") continue;
+                            if ($filter == "disabled" && $status != "NONAKTIF") continue;
+                        }
 
                         $found = true;
                     ?>
@@ -197,29 +202,22 @@ ORDER BY u.username
 
                             <td>
 
-                                <?php if ($filter == "online") { ?>
+                                <?php
 
-                                    <span class="badge bg-primary">
-                                        ONLINE
-                                    </span>
+                                if ($filter == "online" && $search == "") {
+                                    echo '<span class="badge bg-primary">ONLINE</span>';
+                                } else {
 
-                                <?php } else { ?>
+                                    if ($status == "NONAKTIF") {
+                                        echo '<span class="badge bg-danger">⦸</span>';
+                                    } elseif ($status == "EXPIRED") {
+                                        echo '<span class="badge bg-warning text-dark">✖</span>';
+                                    } else {
+                                        echo '<span class="badge bg-success">✔</span>';
+                                    }
+                                }
 
-                                    <span class="badge bg-<?php echo $badge; ?>">
-                                        <?php echo $status; ?>
-                                    </span>
-
-                                    <?php if ($isOnline && $status == "AKTIF") { ?>
-
-                                        <br>
-
-                                        <span class="badge bg-primary">
-                                            ONLINE
-                                        </span>
-
-                                    <?php } ?>
-
-                                <?php } ?>
+                                ?>
 
                             </td>
 
@@ -230,20 +228,14 @@ ORDER BY u.username
                                     <a
                                         href="actions/enable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                         class="btn btn-sm btn-success">
-
-                                        Aktifkan
-
-                                    </a>
+                                        Aktifkan </a>
 
                                 <?php } else { ?>
 
                                     <a
                                         href="actions/disable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                         class="btn btn-sm btn-danger">
-
-                                        Nonaktifkan
-
-                                    </a>
+                                        Nonaktifkan </a>
 
                                 <?php } ?>
 
@@ -251,10 +243,7 @@ ORDER BY u.username
                                     href="actions/delete.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                     onclick="return confirm('Yakin hapus user ini?')"
                                     class="btn btn-sm btn-dark">
-
-                                    Hapus
-
-                                </a>
+                                    Hapus </a>
 
                             </td>
 

@@ -19,3 +19,5 @@ $page = basename($_SERVER['PHP_SELF']);
     <a href="logout.php">Logout</a>
 
 </div>
+
+<p class="copyright">&copy; 2024 Zero.Net</p>
