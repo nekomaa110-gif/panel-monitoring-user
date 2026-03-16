@@ -6,9 +6,11 @@ $search = $_GET['search'] ?? "";
 $filter = $_GET['filter'] ?? "";
 
 /* USER ONLINE */
+
 $onlineUsers = [];
+
 $online_q = $conn->query("
-SELECT username
+SELECT DISTINCT username
 FROM radacct
 WHERE acctstoptime IS NULL
 ");
@@ -18,6 +20,7 @@ while ($o = $online_q->fetch_assoc()) {
 }
 
 /* AMBIL DATA USER */
+
 $q = $conn->query("
 SELECT
 u.username,
@@ -27,9 +30,9 @@ MAX(rug.groupname) AS profile
 
 FROM
 (
-SELECT username FROM radcheck
+SELECT DISTINCT username FROM radcheck
 UNION
-SELECT username FROM radusergroup
+SELECT DISTINCT username FROM radusergroup
 ) u
 
 LEFT JOIN radcheck rc ON u.username = rc.username
@@ -47,9 +50,22 @@ ORDER BY u.username
 <html>
 
 <head>
+
     <title>Pelanggan</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
+
+    <style>
+        .table-scroll {
+            max-height: 550px;
+            overflow-y: auto;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+    </style>
 
 </head>
 
@@ -61,7 +77,7 @@ ORDER BY u.username
         <b>Pelanggan</b>
     </nav>
 
-    <div class="content">
+    <div class="content p-4">
 
         <h3 class="mb-4">Daftar Pelanggan</h3>
 
@@ -103,7 +119,8 @@ ORDER BY u.username
 
                 <input type="hidden" name="filter" value="<?php echo $filter; ?>">
 
-                <input type="text"
+                <input
+                    type="text"
                     name="search"
                     class="form-control me-2"
                     placeholder="Cari user..."
@@ -136,7 +153,11 @@ ORDER BY u.username
 
                 <tbody>
 
-                    <?php while ($r = $q->fetch_assoc()) {
+                    <?php
+
+                    $found = false;
+
+                    while ($r = $q->fetch_assoc()) {
 
                         $exp_string = $r['expiration'];
                         $exp = strtotime($exp_string);
@@ -148,51 +169,108 @@ ORDER BY u.username
                         if ($r['profile'] == "daloRADIUS-Disabled-Users") {
                             $status = "NONAKTIF";
                             $badge = "danger";
-                        } elseif (!empty($exp_string)) {
-                            if ($exp !== false && $exp < $now) {
-                                $status = "EXPIRED";
-                                $badge = "warning";
-                            }
+                        } elseif (!empty($exp_string) && $exp < $now) {
+                            $status = "EXPIRED";
+                            $badge = "warning";
                         }
 
                         $isOnline = in_array($r['username'], $onlineUsers);
 
-                        /* FILTER */
+                        /* FILTER TAB */
 
-                        if ($filter == "online" && (!$isOnline || $status == "NONAKTIF")) continue;
-                        if ($filter == "disabled" && $status != "NONAKTIF") continue;
+                        if ($filter == "online" && !$isOnline) continue;
                         if ($filter == "expired" && $status != "EXPIRED") continue;
+                        if ($filter == "disabled" && $status != "NONAKTIF") continue;
 
+                        $found = true;
                     ?>
 
                         <tr>
 
                             <td><?php echo $r['username']; ?></td>
+
                             <td><?php echo $r['password']; ?></td>
+
                             <td><?php echo $r['profile']; ?></td>
+
                             <td><?php echo $r['expiration']; ?></td>
 
                             <td>
-                                <span class="badge bg-<?php echo $badge; ?>">
-                                    <?php echo $status; ?>
-                                </span>
+
+                                <?php if ($filter == "online") { ?>
+
+                                    <span class="badge bg-primary">
+                                        ONLINE
+                                    </span>
+
+                                <?php } else { ?>
+
+                                    <span class="badge bg-<?php echo $badge; ?>">
+                                        <?php echo $status; ?>
+                                    </span>
+
+                                    <?php if ($isOnline && $status == "AKTIF") { ?>
+
+                                        <br>
+
+                                        <span class="badge bg-primary">
+                                            ONLINE
+                                        </span>
+
+                                    <?php } ?>
+
+                                <?php } ?>
+
                             </td>
 
                             <td>
 
-                                <?php if ($r['profile'] == "daloRADIUS-Disabled-Users") { ?>
+                                <?php if ($status == "NONAKTIF") { ?>
 
-                                    <a href="actions/enable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                    <a
+                                        href="actions/enable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                         class="btn btn-sm btn-success">
-                                        Aktifkan </a>
+
+                                        Aktifkan
+
+                                    </a>
 
                                 <?php } else { ?>
 
-                                    <a href="actions/disable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                    <a
+                                        href="actions/disable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                         class="btn btn-sm btn-danger">
-                                        Nonaktifkan </a>
+
+                                        Nonaktifkan
+
+                                    </a>
 
                                 <?php } ?>
+
+                                <a
+                                    href="actions/delete.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                    onclick="return confirm('Yakin hapus user ini?')"
+                                    class="btn btn-sm btn-dark">
+
+                                    Hapus
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    <?php } ?>
+
+                    <?php if (!$found) { ?>
+
+                        <tr>
+
+                            <td colspan="6">
+
+                                <div class="alert alert-warning m-2">
+                                    User tidak ditemukan
+                                </div>
 
                             </td>
 
@@ -207,8 +285,6 @@ ORDER BY u.username
         </div>
 
     </div>
-
-
 
 </body>
 

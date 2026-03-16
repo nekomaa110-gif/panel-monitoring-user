@@ -12,6 +12,8 @@ $page = basename($_SERVER['PHP_SELF']);
 
     <a href="adduser.php" class="<?= $page == 'adduser.php' ? 'active' : '' ?>">Tambah User</a>
 
+    <a href="edit_user.php" class="<?= $page == 'edit_user.php' ? 'active' : '' ?>">Edit User</a>
+
     <a href="log.php" class="<?= $page == 'log.php' ? 'active' : '' ?>">Log</a>
 
     <a href="logout.php">Logout</a>

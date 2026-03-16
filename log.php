@@ -1,5 +1,6 @@
 <?php
 require "auth.php";
+require "config/db.php";
 
 $logfile = "/var/log/freeradius/radius.log";
 
@@ -16,7 +17,6 @@ if (file_exists($logfile)) {
 <html>
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Log</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
