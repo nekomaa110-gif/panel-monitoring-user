@@ -1,6 +1,5 @@
 <?php
 require "../config/db.php";
-
 $user   = $_GET['user'] ?? '';
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? '';
@@ -11,16 +10,15 @@ if ($user == "") {
 
 /* hapus group lama */
 $conn->query("
-DELETE FROM radusergroup
-WHERE username='$user'
-");
+        DELETE FROM radusergroup
+        WHERE username='$user'
+    ");
 
 /* masukkan ke group disabled */
 $conn->query("
-INSERT INTO radusergroup (username,groupname,priority)
-VALUES ('$user','daloRADIUS-Disabled-Users',0)
-");
+        INSERT INTO radusergroup (username,groupname,priority)
+        VALUES ('$user','daloRADIUS-Disabled-Users',0)
+    ");
 
-/* kembali ke halaman sebelumnya */
 header("Location: ../users.php?search=$search&filter=$filter");
 exit;

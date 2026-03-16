@@ -11,15 +11,15 @@ if ($user == "") {
 
 /* hapus group lama */
 $conn->query("
-DELETE FROM radusergroup
-WHERE username='$user'
-");
+        DELETE FROM radusergroup
+        WHERE username='$user'
+    ");
 
 /* masukkan kembali ke profile aktif */
 $conn->query("
-INSERT INTO radusergroup (username,groupname,priority)
-VALUES ('$user','Radius-Member',0)
-");
+        INSERT INTO radusergroup (username,groupname,priority)
+        VALUES ('$user','Radius-Member',0)
+    ");
 
 /* kembali ke halaman sebelumnya */
 header("Location: ../users.php?search=$search&filter=$filter");

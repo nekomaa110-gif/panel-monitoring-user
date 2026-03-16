@@ -3,32 +3,29 @@ require "../config/db.php";
 $user = $_GET['user'] ?? '';
 $hari = $_POST['hari'] ?? '';
 
-if($user==""){
-die("username kosong");
+if ($user == "") {
+    die("username kosong");
 }
-
-/* kalau form belum disubmit tampilkan form */
-if(empty($hari)){
+if (empty($hari)) {
 ?>
 
-<h2>Perpanjang Masa Aktif</h2>
+    <h2>Perpanjang Masa Aktif</h2>
 
-<form method="POST">
+    <form method="POST">
 
-User : <b><?php echo $user; ?></b>
+        User : <b><?php echo $user; ?></b>
 
-<br><br>
+        <br><br>
+        Tambah Hari : <input type="number" name="hari" value="30">
 
-Tambah Hari : <input type="number" name="hari" value="30">
+        <br><br>
 
-<br><br>
+        <button type="submit">Simpan</button>
 
-<button type="submit">Simpan</button>
-
-</form>
+    </form>
 
 <?php
-exit;
+    exit;
 }
 
 /* ambil expiration lama */
@@ -43,13 +40,12 @@ $row = $q->fetch_assoc();
 $exp_lama = $row['value'] ?? '';
 
 /* hitung expiration baru */
-if(empty($exp_lama)){
-$exp_baru = date("d M Y 23:59", strtotime("+$hari days"));
-}else{
+if (empty($exp_lama)) {
+    $exp_baru = date("d M Y 23:59", strtotime("+$hari days"));
+} else {
 
-$exp_time = strtotime($exp_lama);
-$exp_baru = date("d M Y 23:59", strtotime("+$hari days",$exp_time));
-
+    $exp_time = strtotime($exp_lama);
+    $exp_baru = date("d M Y 23:59", strtotime("+$hari days", $exp_time));
 }
 
 /* cek apakah sudah ada expiration */
@@ -60,22 +56,20 @@ WHERE username='$user'
 AND attribute='Expiration'
 ");
 
-if($cek->num_rows>0){
+if ($cek->num_rows > 0) {
 
-$conn->query("
+    $conn->query("
 UPDATE radcheck
 SET value='$exp_baru'
 WHERE username='$user'
 AND attribute='Expiration'
 ");
+} else {
 
-}else{
-
-$conn->query("
+    $conn->query("
 INSERT INTO radcheck (username,attribute,op,value)
 VALUES ('$user','Expiration',':=','$exp_baru')
 ");
-
 }
 
 /* kembali ke panel */
