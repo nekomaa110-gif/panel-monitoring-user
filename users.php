@@ -79,7 +79,7 @@ ORDER BY u.username
 
     <div class="content p-4">
 
-        <h3 class="mb-4">Daftar Pelanggan</h3>
+        <h3 class="mb-4">Daftar Pelanggan dan Status</h3>
 
         <div class="d-flex justify-content-between mb-3">
 
@@ -102,14 +102,14 @@ ORDER BY u.username
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>"
                         href="users.php?filter=expired&search=<?php echo $search; ?>">
-                        Expired
+                        Kadaluarsa
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>"
                         href="users.php?filter=disabled&search=<?php echo $search; ?>">
-                        Disabled
+                        Dinonaktifkan
                     </a>
                 </li>
 

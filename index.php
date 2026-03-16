@@ -117,7 +117,7 @@ LIMIT 20
 
                         <h3 class="text-warning"><?php echo $expired ?></h3>
 
-                        Expired
+                        Kadaluarsa
 
                     </div>
 
@@ -133,7 +133,7 @@ LIMIT 20
 
                         <h3 class="text-danger"><?php echo $disabled ?></h3>
 
-                        Disabled
+                        Dinonaktifkan
 
                     </div>
 
@@ -233,7 +233,7 @@ LIMIT 20
 
     </div>
 
-   
+
 
 </body>
 
