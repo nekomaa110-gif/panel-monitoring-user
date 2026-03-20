@@ -4,142 +4,132 @@ require "config/db.php";
 
 $msg = "";
 
+/* AMBIL SEMUA PROFIL (CHECK + REPLY) */
+$profiles = $conn->query("
+SELECT DISTINCT groupname FROM (
+    SELECT groupname FROM radgroupcheck
+    UNION
+    SELECT groupname FROM radgroupreply
+) AS allgroups
+ORDER BY groupname
+");
+
 if (isset($_POST['save'])) {
 
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $hari = $_POST['hari'];
-    $profile = $_POST['profile'];
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+    $hari     = $_POST['hari'];
+    $profile  = $_POST['profile'];
 
-    if ($username && $password) {
+    if ($username && $password && $profile) {
 
+        // hitung expiration
         $expiration = date("d M Y 23:59", strtotime("+$hari days"));
 
-        $conn->query("
-INSERT INTO radcheck (username,attribute,op,value)
-VALUES ('$username','Cleartext-Password',':=','$password')
-");
+        // CEK USER SUDAH ADA
+        $cek = $conn->query("
+        SELECT * FROM radcheck WHERE username='$username'
+        ");
 
-        $conn->query("
-INSERT INTO radcheck (username,attribute,op,value)
-VALUES ('$username','Expiration',':=','$expiration')
-");
+        if ($cek->num_rows > 0) {
+            $msg = "User sudah ada!";
+        } else {
 
-        $conn->query("
-INSERT INTO radusergroup (username,groupname,priority)
-VALUES ('$username','$profile',0)
-");
+            // PASSWORD
+            $conn->query("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES ('$username','Cleartext-Password',':=','$password')
+            ");
 
-        $msg = "User berhasil dibuat";
+            // EXPIRATION
+            $conn->query("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES ('$username','Expiration',':=','$expiration')
+            ");
+
+            // MASUKKAN KE PROFILE (GROUP)
+            $conn->query("
+            INSERT INTO radusergroup (username,groupname,priority)
+            VALUES ('$username','$profile',0)
+            ");
+
+            $msg = "User berhasil dibuat";
+        }
+
+    } else {
+        $msg = "Isi semua field!";
     }
 }
 ?>
 
 <!DOCTYPE html>
-
 <html>
 
 <head>
     <title>Tambah User</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
-
 </head>
 
 <body>
-    <?php include "sidebar.php"; ?>
 
-    <nav class="navbar navbar-light bg-white shadow-sm px-4">
-        <b>Tambah User</b>
-    </nav>
+<?php include "sidebar.php"; ?>
 
-    <div class="content">
+<nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <b>Tambah User</b>
+</nav>
 
-        <h3 class="mb-4">Tambah User Baru</h3>
+<div class="content p-4">
 
-        <?php if ($msg) { ?>
+    <h3 class="mb-4">Tambah User Baru</h3>
 
-            <div class="alert alert-success">
-                <?php echo $msg ?>
-            </div>
+    <?php if ($msg) { ?>
+        <div class="alert alert-info"><?php echo $msg ?></div>
+    <?php } ?>
 
-        <?php } ?>
+    <form method="POST">
 
-        <form method="POST">
+        <!-- USERNAME -->
+        <div class="mb-3">
+            <label>Username</label>
+            <input name="username" class="form-control" required>
+        </div>
 
-            <div class="row mb-3">
+        <!-- PASSWORD -->
+        <div class="mb-3">
+            <label>Password</label>
+            <input name="password" class="form-control" required>
+        </div>
 
-                <div class="col-md-2">
-                    <label class="form-label">Username</label>
-                </div>
+        <!-- PROFIL -->
+        <div class="mb-3">
+            <label>Profil</label>
 
-                <div class="col-md-4">
-                    <input name="username" class="form-control">
-                </div>
+            <select name="profile" class="form-control" required>
 
-            </div>
+                <?php while($p = $profiles->fetch_assoc()) { ?>
+                    <option value="<?php echo $p['groupname']; ?>">
+                        <?php echo $p['groupname']; ?>
+                    </option>
+                <?php } ?>
 
-            <div class="row mb-3">
+            </select>
 
-                <div class="col-md-2">
-                    <label class="form-label">Password</label>
-                </div>
+        </div>
 
-                <div class="col-md-4">
-                    <input name="password" class="form-control">
-                </div>
+        <!-- MASA AKTIF -->
+        <div class="mb-3">
+            <label>Masa Aktif (Hari)</label>
+            <input type="number" name="hari" value="30" class="form-control">
+        </div>
 
-            </div>
+        <button name="save" class="btn btn-primary w-100">
+            Simpan
+        </button>
 
-            <div class="row mb-3">
+    </form>
 
-                <div class="col-md-2">
-                    <label class="form-label">Profil</label>
-                </div>
-
-                <div class="col-md-4">
-
-                    <select name="profile" class="form-control">
-
-                        <option value="Radius-Member">Radius-Member</option>
-                        <option value="TEST">TEST</option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-            <div class="row mb-4">
-
-                <div class="col-md-2">
-                    <label class="form-label">Masa Aktif</label>
-                </div>
-
-                <div class="col-md-2">
-                    <input type="number" name="hari" value="30" class="form-control">
-                </div>
-
-            </div>
-
-            <div class="row">
-
-                <div class="col-md-2"></div>
-
-                <div class="col-md-2">
-
-                    <button name="save" class="btn btn-primary w-100">
-                        Simpan
-                    </button>
-
-                </div>
-
-            </div>
-
-        </form>
-
-    </div>
+</div>
 
 </body>
-
 </html>
