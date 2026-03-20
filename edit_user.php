@@ -2,10 +2,9 @@
 require "auth.php";
 require "config/db.php";
 
-$user = $_GET['user'] ?? '';
+$user = $_GET['user'] ?? "";
 
 /* cari user */
-
 if (isset($_GET['find'])) {
     $user = $_GET['username'];
 }
@@ -16,12 +15,12 @@ $expiration = "";
 if ($user != "") {
 
     $q = $conn->query("
-SELECT
-MAX(CASE WHEN attribute='Cleartext-Password' THEN value END) password,
-MAX(CASE WHEN attribute='Expiration' THEN value END) expiration
-FROM radcheck
-WHERE username='$user'
-");
+    SELECT
+    MAX(CASE WHEN attribute='Cleartext-Password' THEN value END) as password,
+    MAX(CASE WHEN attribute='Expiration' THEN value END) as expiration
+    FROM radcheck
+    WHERE username='$user'
+    ");
 
     $data = $q->fetch_assoc();
 
@@ -30,119 +29,135 @@ WHERE username='$user'
 }
 
 /* simpan perubahan */
-
 if (isset($_POST['save'])) {
 
     $user = $_POST['user'];
     $password = $_POST['password'];
     $expiration = $_POST['expiration'];
 
-    $conn->query("
-UPDATE radcheck
-SET value='$password'
-WHERE username='$user'
-AND attribute='Cleartext-Password'
-");
+    // =========================
+    // PASSWORD
+    // =========================
+    if ($password != "") {
 
-    $conn->query("
-UPDATE radcheck
-SET value='$expiration'
-WHERE username='$user'
-AND attribute='Expiration'
-");
+        $cekPass = $conn->query("
+        SELECT * FROM radcheck 
+        WHERE username='$user' 
+        AND attribute='Cleartext-Password'
+        ");
 
-    echo "<script>alert('User berhasil di update');</script>";
+        if ($cekPass->num_rows > 0) {
+
+            $conn->query("
+            UPDATE radcheck 
+            SET value='$password' 
+            WHERE username='$user' 
+            AND attribute='Cleartext-Password'
+            ");
+
+        } else {
+
+            $conn->query("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES ('$user','Cleartext-Password',':=','$password')
+            ");
+        }
+    }
+
+    // =========================
+    // EXPIRATION
+    // =========================
+    if ($expiration != "") {
+
+        $cekExp = $conn->query("
+        SELECT * FROM radcheck 
+        WHERE username='$user' 
+        AND attribute='Expiration'
+        ");
+
+        if ($cekExp->num_rows > 0) {
+
+            $conn->query("
+            UPDATE radcheck 
+            SET value='$expiration' 
+            WHERE username='$user' 
+            AND attribute='Expiration'
+            ");
+
+        } else {
+
+            $conn->query("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES ('$user','Expiration',':=','$expiration')
+            ");
+        }
+    }
+
+    // 🔥 NOTIF + STAY DI HALAMAN
+    $_SESSION['msg'] = "User berhasil di update";
+    header("Location: edit_user.php?user=$user");
+    exit;
 }
 ?>
 
 <!DOCTYPE html>
-
 <html>
 
 <head>
-
     <title>Edit User</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/style.css" rel="stylesheet">
-
 </head>
 
 <body>
 
-    <?php include "sidebar.php"; ?>
+<?php include "sidebar.php"; ?>
 
-    <nav class="navbar navbar-light bg-white shadow-sm px-4">
-        <b>Edit User</b>
-    </nav>
+<nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <b>Edit User</b>
+</nav>
 
-    <div class="content p-4">
+<div class="content p-4">
 
-        <h3>Cari User</h3>
+    <!-- 🔥 NOTIF -->
+    <?php if (isset($_SESSION['msg'])) { ?>
+        <div class="alert alert-success">
+            <?php echo $_SESSION['msg']; ?>
+        </div>
+    <?php unset($_SESSION['msg']); } ?>
 
-        <form method="GET" class="mb-4">
+    <h3>Cari User</h3>
 
-            <input
-                type="text"
-                name="username"
-                class="form-control mb-2"
-                placeholder="Masukkan username">
+    <form method="GET" class="mb-4">
+        <input type="text" name="username" class="form-control mb-2" placeholder="Masukkan username">
+        <button name="find" class="btn btn-primary">Cari</button>
+    </form>
 
-            <button
-                class="btn btn-primary"
-                name="find">
+    <?php if ($user != "") { ?>
 
-                Cari User
+    <h3>Edit User: <?php echo $user ?></h3>
 
-            </button>
+    <form method="POST">
 
-        </form>
+        <input type="hidden" name="user" value="<?php echo $user ?>">
 
-        <?php if ($user != "") { ?>
+        <div class="mb-3">
+            <label>Password</label>
+            <input name="password" value="<?php echo $password ?>" class="form-control">
+        </div>
 
-            <h4>Edit User : <?php echo $user; ?></h4>
+        <div class="mb-3">
+            <label>Expiration</label>
+            <input name="expiration" value="<?php echo $expiration ?>" class="form-control">
+        </div>
 
-            <form method="POST">
+        <button name="save" class="btn btn-success">Simpan</button>
 
-                <input type="hidden" name="user" value="<?php echo $user; ?>">
+    </form>
 
-                <div class="mb-3">
+    <?php } ?>
 
-                    <label>Password</label>
-
-                    <input
-                        type="text"
-                        name="password"
-                        class="form-control"
-                        value="<?php echo $password; ?>">
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label>Masa Aktif</label>
-
-                    <input
-                        type="text"
-                        name="expiration"
-                        class="form-control"
-                        value="<?php echo $expiration; ?>">
-
-                </div>
-
-                <button class="btn btn-success" name="save">
-                    Simpan
-                </button>
-
-                <a href="edit_user.php" class="btn btn-secondary">
-                    Batal
-                </a>
-
-            </form>
-
-        <?php } ?>
-
-    </div>
+</div>
 
 </body>
-
 </html>
