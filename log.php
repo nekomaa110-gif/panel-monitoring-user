@@ -76,35 +76,40 @@ if (file_exists($logfile)) {
                         if ($count > 300) break;
 
                         $status = "";
-                        $user = "";
+                        $user = "-";
                         $ket = "";
+                        $time = ["", "-"];
+
+                        /* AMBIL WAKTU & USER */
+                        preg_match('/^(.+?) :/', $line, $time);
+                        preg_match('/\[(.*?)\//', $line, $u);
+                        $time_val = $time[1] ?? "-";
+                        $user = $u[1] ?? "-";
 
                         /* LOGIN SUKSES */
-
                         if (strpos($line, "Login OK") !== false) {
 
-                            preg_match('/^(.+?) :/', $line, $time);
-                            preg_match('/\[(.*?)\//', $line, $u);
-
                             $status = "Login Sukses";
-                            $user = $u[1] ?? "-";
                             $ket = "Autentikasi berhasil";
                         }
 
                         /* LOGIN GAGAL */ elseif (strpos($line, "Login incorrect") !== false) {
 
-                            preg_match('/^(.+?) :/', $line, $time);
-                            preg_match('/\[(.*?)\//', $line, $u);
+                            $status = "Login Gagal";
+                            $ket = "Password salah";
+                        } elseif (strpos($line, "Invalid user") !== false || strpos($line, "No such user") !== false) {
 
                             $status = "Login Gagal";
-                            $user = $u[1] ?? "-";
-                            $ket = "Password salah atau user tidak ditemukan";
+                            $ket = "User tidak ditemukan";
+                        } elseif (strpos($line, "user locked") !== false) {
+
+                            $status = "Login Gagal";
+                            $ket = "User dinonaktifkan";
                         } else {
                             continue;
                         }
 
                         /* FILTER SEARCH */
-
                         $fulltext = strtolower($user . " " . $status . " " . $ket);
 
                         if ($search && strpos($fulltext, strtolower($search)) === false) {
@@ -114,7 +119,7 @@ if (file_exists($logfile)) {
                         $badge = $status == "Login Sukses" ? "success" : "danger";
 
                         echo "<tr>";
-                        echo "<td>" . $time[1] . "</td>";
+                        echo "<td>" . $time_val . "</td>";
                         echo "<td>" . $user . "</td>";
                         echo "<td><span class='badge bg-$badge'>$status</span></td>";
                         echo "<td>" . $ket . "</td>";
@@ -122,7 +127,6 @@ if (file_exists($logfile)) {
 
                         $count++;
                     }
-
                     ?>
 
                 </tbody>

@@ -12,6 +12,7 @@ if (isset($_GET['find'])) {
 $password = "";
 $expiration = "";
 
+/* AMBIL DATA USER */
 if ($user != "") {
 
     $q = $conn->query("
@@ -24,20 +25,28 @@ if ($user != "") {
 
     $data = $q->fetch_assoc();
 
-    $password = $data['password'] ?? "";
-    $expiration = $data['expiration'] ?? "";
+    if ($data['password'] === null && $data['expiration'] === null) {
+
+        $user = ""; // biar form ga muncul
+        $_SESSION['msg'] = [
+            "type" => "danger",
+            "text" => "User tidak ditemukan"
+        ];
+    } else {
+
+        $password = $data['password'] ?? "";
+        $expiration = $data['expiration'] ?? "";
+    }
 }
 
-/* simpan perubahan */
+/* SIMPAN PERUBAHAN */
 if (isset($_POST['save'])) {
 
     $user = $_POST['user'];
     $password = $_POST['password'];
     $expiration = $_POST['expiration'];
 
-    // =========================
-    // PASSWORD
-    // =========================
+    /* PASSWORD */
     if ($password != "") {
 
         $cekPass = $conn->query("
@@ -63,9 +72,7 @@ if (isset($_POST['save'])) {
         }
     }
 
-    // =========================
-    // EXPIRATION
-    // =========================
+    /* EXPIRATION */
     if ($expiration != "") {
 
         $cekExp = $conn->query("
@@ -91,8 +98,11 @@ if (isset($_POST['save'])) {
         }
     }
 
-    // 🔥 NOTIF + STAY DI HALAMAN
-    $_SESSION['msg'] = "User berhasil di update";
+    $_SESSION['msg'] = [
+        "type" => "success",
+        "text" => "User berhasil di update"
+    ];
+
     header("Location: edit_user.php?user=$user");
     exit;
 }
@@ -117,10 +127,10 @@ if (isset($_POST['save'])) {
 
     <div class="content p-4">
 
-        <!-- 🔥 NOTIF -->
+        <!-- 🔥 NOTIF BERSIH -->
         <?php if (isset($_SESSION['msg'])) { ?>
-            <div class="alert alert-success">
-                <?php echo $_SESSION['msg']; ?>
+            <div class="alert alert-<?php echo $_SESSION['msg']['type']; ?>">
+                <?php echo $_SESSION['msg']['text']; ?>
             </div>
         <?php unset($_SESSION['msg']);
         } ?>
