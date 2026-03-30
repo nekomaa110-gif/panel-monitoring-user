@@ -10,6 +10,45 @@ $lines = [];
 if (file_exists($logfile)) {
     $lines = array_reverse(file($logfile));
 }
+
+function indoDate($date)
+{
+    $bulan = [
+        "Jan" => "Januari",
+        "Feb" => "Februari",
+        "Mar" => "Maret",
+        "Apr" => "April",
+        "May" => "Mei",
+        "Jun" => "Juni",
+        "Jul" => "Juli",
+        "Aug" => "Agustus",
+        "Sep" => "September",
+        "Oct" => "Oktober",
+        "Nov" => "November",
+        "Dec" => "Desember"
+    ];
+
+    $hari = [
+        "Sun" => "Minggu",
+        "Mon" => "Senin",
+        "Tue" => "Selasa",
+        "Wed" => "Rabu",
+        "Thu" => "Kamis",
+        "Fri" => "Jumat",
+        "Sat" => "Sabtu"
+    ];
+
+    $pecah = explode(" ", $date);
+
+    // contoh: Wed Mar 30 01:40:41 2026
+    $h = $hari[$pecah[0]] ?? $pecah[0];
+    $b = $bulan[$pecah[1]] ?? $pecah[1];
+    $tgl = $pecah[2];
+    $jam = substr($pecah[3], 0, 5);
+    $thn = $pecah[4];
+
+    return "$h, $tgl $b $thn $jam";
+}
 ?>
 
 <!DOCTYPE html>
@@ -119,7 +158,7 @@ if (file_exists($logfile)) {
                         $badge = $status == "Login Sukses" ? "success" : "danger";
 
                         echo "<tr>";
-                        echo "<td>" . $time_val . "</td>";
+                        echo "<td>" . indoDate($time_val) . "</td>";
                         echo "<td>" . $user . "</td>";
                         echo "<td><span class='badge bg-$badge'>$status</span></td>";
                         echo "<td>" . $ket . "</td>";
