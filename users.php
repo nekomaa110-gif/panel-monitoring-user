@@ -38,7 +38,7 @@ SELECT DISTINCT username FROM radusergroup
 LEFT JOIN radcheck rc ON u.username = rc.username
 LEFT JOIN radusergroup rug ON u.username = rug.username
 
-WHERE u.username LIKE '%$search%'
+WHERE LOWER(u.username) LIKE LOWER('%$search%')
 
 GROUP BY u.username
 ORDER BY u.username

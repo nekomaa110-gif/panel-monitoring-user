@@ -12,7 +12,7 @@ if ($user == "") {
 /* hapus group lama */
 $conn->query("
         DELETE FROM radusergroup
-        WHERE username='$user'
+        WHERE BINARY username='$user'
     ");
 
 /* masukkan kembali ke profile aktif */

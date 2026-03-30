@@ -19,7 +19,7 @@ if ($user != "") {
     MAX(CASE WHEN attribute='Cleartext-Password' THEN value END) as password,
     MAX(CASE WHEN attribute='Expiration' THEN value END) as expiration
     FROM radcheck
-    WHERE username='$user'
+    WHERE BINARY username='$user'
     ");
 
     $data = $q->fetch_assoc();
@@ -42,7 +42,7 @@ if (isset($_POST['save'])) {
 
         $cekPass = $conn->query("
         SELECT * FROM radcheck 
-        WHERE username='$user' 
+        WHERE BINARY username='$user' 
         AND attribute='Cleartext-Password'
         ");
 
@@ -51,10 +51,9 @@ if (isset($_POST['save'])) {
             $conn->query("
             UPDATE radcheck 
             SET value='$password' 
-            WHERE username='$user' 
+            WHERE BINARY username='$user' 
             AND attribute='Cleartext-Password'
             ");
-
         } else {
 
             $conn->query("
@@ -71,7 +70,7 @@ if (isset($_POST['save'])) {
 
         $cekExp = $conn->query("
         SELECT * FROM radcheck 
-        WHERE username='$user' 
+        WHERE BINARY username='$user' 
         AND attribute='Expiration'
         ");
 
@@ -80,10 +79,9 @@ if (isset($_POST['save'])) {
             $conn->query("
             UPDATE radcheck 
             SET value='$expiration' 
-            WHERE username='$user' 
+            WHERE BINARY username='$user' 
             AND attribute='Expiration'
             ");
-
         } else {
 
             $conn->query("
@@ -111,53 +109,55 @@ if (isset($_POST['save'])) {
 
 <body>
 
-<?php include "sidebar.php"; ?>
+    <?php include "sidebar.php"; ?>
 
-<nav class="navbar navbar-light bg-white shadow-sm px-4">
-    <b>Edit User</b>
-</nav>
+    <nav class="navbar navbar-light bg-white shadow-sm px-4">
+        <b>Edit User</b>
+    </nav>
 
-<div class="content p-4">
+    <div class="content p-4">
 
-    <!-- 🔥 NOTIF -->
-    <?php if (isset($_SESSION['msg'])) { ?>
-        <div class="alert alert-success">
-            <?php echo $_SESSION['msg']; ?>
-        </div>
-    <?php unset($_SESSION['msg']); } ?>
+        <!-- 🔥 NOTIF -->
+        <?php if (isset($_SESSION['msg'])) { ?>
+            <div class="alert alert-success">
+                <?php echo $_SESSION['msg']; ?>
+            </div>
+        <?php unset($_SESSION['msg']);
+        } ?>
 
-    <h3>Cari User</h3>
+        <h3>Cari User</h3>
 
-    <form method="GET" class="mb-4">
-        <input type="text" name="username" class="form-control mb-2" placeholder="Masukkan username">
-        <button name="find" class="btn btn-primary">Cari</button>
-    </form>
+        <form method="GET" class="mb-4">
+            <input type="text" name="username" class="form-control mb-2" placeholder="Masukkan username">
+            <button name="find" class="btn btn-primary">Cari</button>
+        </form>
 
-    <?php if ($user != "") { ?>
+        <?php if ($user != "") { ?>
 
-    <h3>Edit User: <?php echo $user ?></h3>
+            <h3>Edit User: <?php echo $user ?></h3>
 
-    <form method="POST">
+            <form method="POST">
 
-        <input type="hidden" name="user" value="<?php echo $user ?>">
+                <input type="hidden" name="user" value="<?php echo $user ?>">
 
-        <div class="mb-3">
-            <label>Password</label>
-            <input name="password" value="<?php echo $password ?>" class="form-control">
-        </div>
+                <div class="mb-3">
+                    <label>Password</label>
+                    <input name="password" value="<?php echo $password ?>" class="form-control">
+                </div>
 
-        <div class="mb-3">
-            <label>Expiration</label>
-            <input name="expiration" value="<?php echo $expiration ?>" class="form-control">
-        </div>
+                <div class="mb-3">
+                    <label>Expiration</label>
+                    <input name="expiration" value="<?php echo $expiration ?>" class="form-control">
+                </div>
 
-        <button name="save" class="btn btn-success">Simpan</button>
+                <button name="save" class="btn btn-success">Simpan</button>
 
-    </form>
+            </form>
 
-    <?php } ?>
+        <?php } ?>
 
-</div>
+    </div>
 
 </body>
+
 </html>

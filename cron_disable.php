@@ -18,7 +18,7 @@ while ($r = $q->fetch_assoc()) {
         // cek apakah sudah disabled
         $cek = $conn->query("
         SELECT * FROM radusergroup 
-        WHERE username='$user' 
+        WHERE BINARY username='$user' 
         AND groupname='daloRADIUS-Disabled-Users'
         ");
 
@@ -28,7 +28,7 @@ while ($r = $q->fetch_assoc()) {
             $conn->query("
             UPDATE radusergroup
             SET groupname='daloRADIUS-Disabled-Users'
-            WHERE username='$user'
+            WHERE BINARY username='$user'
             ");
         }
     }
