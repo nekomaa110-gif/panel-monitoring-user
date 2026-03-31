@@ -87,9 +87,6 @@ ORDER BY u.username
         </a>
 
     </nav>
-    <b>Pelanggan</b>
-    </nav>
-
     <div class="content p-4">
 
         <h3 class="mb-4">Daftar Pelanggan dan Status</h3>
@@ -149,7 +146,7 @@ ORDER BY u.username
 
         <div class="table-scroll">
 
-            <table class="table table-striped table-hover text-center">
+            <table class="table table-striped text-center">
 
                 <thead class="table-dark">
 
