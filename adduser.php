@@ -55,7 +55,6 @@ if (isset($_POST['save'])) {
 
             $msg = "User berhasil dibuat";
         }
-
     } else {
         $msg = "Isi semua field!";
     }
@@ -73,63 +72,72 @@ if (isset($_POST['save'])) {
 
 <body>
 
-<?php include "sidebar.php"; ?>
+    <?php include "sidebar.php"; ?>
 
-<nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <nav class="navbar navbar-light bg-white shadow-sm px-4 d-flex justify-content-between">
+
+        <b>Tambah User</b>
+
+        <a href="logout.php" class="btn btn-danger d-flex align-items-center gap-2">
+            Logout
+        </a>
+
+    </nav>
     <b>Tambah User</b>
-</nav>
+    </nav>
 
-<div class="content p-4">
+    <div class="content p-4">
 
-    <h3 class="mb-4">Tambah User Baru</h3>
+        <h3 class="mb-4">Tambah User Baru</h3>
 
-    <?php if ($msg) { ?>
-        <div class="alert alert-info"><?php echo $msg ?></div>
-    <?php } ?>
+        <?php if ($msg) { ?>
+            <div class="alert alert-info"><?php echo $msg ?></div>
+        <?php } ?>
 
-    <form method="POST">
+        <form method="POST">
 
-        <!-- USERNAME -->
-        <div class="mb-3">
-            <label>Username</label>
-            <input name="username" class="form-control" required>
-        </div>
+            <!-- USERNAME -->
+            <div class="mb-3">
+                <label>Username</label>
+                <input name="username" class="form-control" required>
+            </div>
 
-        <!-- PASSWORD -->
-        <div class="mb-3">
-            <label>Password</label>
-            <input name="password" class="form-control" required>
-        </div>
+            <!-- PASSWORD -->
+            <div class="mb-3">
+                <label>Password</label>
+                <input name="password" class="form-control" required>
+            </div>
 
-        <!-- PROFIL -->
-        <div class="mb-3">
-            <label>Profil</label>
+            <!-- PROFIL -->
+            <div class="mb-3">
+                <label>Profil</label>
 
-            <select name="profile" class="form-control" required>
+                <select name="profile" class="form-control" required>
 
-                <?php while($p = $profiles->fetch_assoc()) { ?>
-                    <option value="<?php echo $p['groupname']; ?>">
-                        <?php echo $p['groupname']; ?>
-                    </option>
-                <?php } ?>
+                    <?php while ($p = $profiles->fetch_assoc()) { ?>
+                        <option value="<?php echo $p['groupname']; ?>">
+                            <?php echo $p['groupname']; ?>
+                        </option>
+                    <?php } ?>
 
-            </select>
+                </select>
 
-        </div>
+            </div>
 
-        <!-- MASA AKTIF -->
-        <div class="mb-3">
-            <label>Masa Aktif (Hari)</label>
-            <input type="number" name="hari" value="30" class="form-control">
-        </div>
+            <!-- MASA AKTIF -->
+            <div class="mb-3">
+                <label>Masa Aktif (Hari)</label>
+                <input type="number" name="hari" value="30" class="form-control">
+            </div>
 
-        <button name="save" class="btn btn-primary w-100">
-            Simpan
-        </button>
+            <button name="save" class="btn btn-primary w-100">
+                Simpan
+            </button>
 
-    </form>
+        </form>
 
-</div>
+    </div>
 
 </body>
+
 </html>

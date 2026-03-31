@@ -43,6 +43,12 @@ body {
     align-items: center;
 }
 
+.navbar .btn-danger {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
 /* CONTENT */
 
 .content {

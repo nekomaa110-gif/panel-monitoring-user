@@ -40,7 +40,6 @@ if (isset($_POST['add'])) {
             }
 
             $msg = "Profil + atribut berhasil dibuat";
-
         } else {
             $msg = "Profil sudah ada";
         }
@@ -81,88 +80,97 @@ ORDER BY groupname
 
 <body>
 
-<?php include "sidebar.php"; ?>
+    <?php include "sidebar.php"; ?>
 
-<nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <nav class="navbar navbar-light bg-white shadow-sm px-4 d-flex justify-content-between">
+
+        <b>Manajemen Profil</b>
+
+        <a href="logout.php" class="btn btn-danger d-flex align-items-center gap-2">
+            Logout
+        </a>
+
+    </nav>
     <b>Manajemen Profil</b>
-</nav>
+    </nav>
 
-<div class="content p-4">
+    <div class="content p-4">
 
-    <?php if ($msg) { ?>
-        <div class="alert alert-info"><?php echo $msg ?></div>
-    <?php } ?>
+        <?php if ($msg) { ?>
+            <div class="alert alert-info"><?php echo $msg ?></div>
+        <?php } ?>
 
-    <div class="row">
+        <div class="row">
 
-        <!-- TAMBAH PROFIL -->
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
+            <!-- TAMBAH PROFIL -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
 
-                    <h5>Tambah Profil</h5>
+                        <h5>Tambah Profil</h5>
 
-                    <form method="POST">
+                        <form method="POST">
 
-                        <input type="text" name="profile" class="form-control mb-2" placeholder="Nama Profil" required>
+                            <input type="text" name="profile" class="form-control mb-2" placeholder="Nama Profil" required>
 
-                        <input type="number" name="simu" class="form-control mb-2" placeholder="Simultaneous (1)">
+                            <input type="number" name="simu" class="form-control mb-2" placeholder="Simultaneous (1)">
 
-                        <input type="text" name="mtk" class="form-control mb-2" placeholder="Mikrotik Group (paket-5M)">
+                            <input type="text" name="mtk" class="form-control mb-2" placeholder="Mikrotik Group (paket-5M)">
 
-                        <button class="btn btn-primary w-100" name="add">
-                            Simpan
-                        </button>
+                            <button class="btn btn-primary w-100" name="add">
+                                Simpan
+                            </button>
 
-                    </form>
+                        </form>
 
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- LIST -->
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
+            <!-- LIST -->
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
 
-                    <h5>Daftar Profil</h5>
+                        <h5>Daftar Profil</h5>
 
-                    <table class="table table-bordered">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Nama Profil</th>
-                                <th width="120">Aksi</th>
-                            </tr>
-                        </thead>
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Nama Profil</th>
+                                    <th width="120">Aksi</th>
+                                </tr>
+                            </thead>
 
-                        <tbody>
+                            <tbody>
 
-                            <?php while($row = $q->fetch_assoc()) { ?>
+                                <?php while ($row = $q->fetch_assoc()) { ?>
 
-                            <tr>
-                                <td><?php echo $row['groupname']; ?></td>
-                                <td>
-                                    <a href="?hapus=<?php echo $row['groupname']; ?>"
-                                       class="btn btn-danger btn-sm"
-                                       onclick="return confirm('Yakin hapus?')">
-                                       Hapus
-                                    </a>
-                                </td>
-                            </tr>
+                                    <tr>
+                                        <td><?php echo $row['groupname']; ?></td>
+                                        <td>
+                                            <a href="?hapus=<?php echo $row['groupname']; ?>"
+                                                class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Yakin hapus?')">
+                                                Hapus
+                                            </a>
+                                        </td>
+                                    </tr>
 
-                            <?php } ?>
+                                <?php } ?>
 
-                        </tbody>
+                            </tbody>
 
-                    </table>
+                        </table>
 
+                    </div>
                 </div>
             </div>
+
         </div>
 
     </div>
 
-</div>
-
 </body>
+
 </html>

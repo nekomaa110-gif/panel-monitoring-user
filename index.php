@@ -61,13 +61,17 @@ LIMIT 20
     <!-- SIDEBAR -->
     <?php include "sidebar.php"; ?>
     <!-- NAVBAR -->
-    <nav class="navbar bg-white shadow-sm">
+    <nav class="navbar navbar-light bg-white shadow-sm px-4 d-flex justify-content-between">
 
-        <div class="container-fluid">
+        <b>Dashboard</b>
 
-            <b>Dashboard</b>
+        <a href="logout.php" class="btn btn-danger d-flex align-items-center gap-2">
+            Logout
+        </a>
 
-        </div>
+    </nav>
+
+    <b>Dashboard</b>
 
     </nav>
 

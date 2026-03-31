@@ -17,8 +17,4 @@ $page = basename($_SERVER['PHP_SELF']);
 
     <a href="log.php" class="<?= $page == 'log.php' ? 'active' : '' ?>">Log</a>
 
-    <a href="voucher.php" class="<?= $page == 'voucher.php' ? 'active' : '' ?>">Voucher</a>
-
-    <a href="logout.php">Logout</a>
-
 </div>

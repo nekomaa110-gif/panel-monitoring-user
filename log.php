@@ -66,8 +66,16 @@ function indoDate($date)
 
     <?php include "sidebar.php"; ?>
 
-    <nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <nav class="navbar navbar-light bg-white shadow-sm px-4 d-flex justify-content-between">
+
         <b>Log</b>
+
+        <a href="logout.php" class="btn btn-danger d-flex align-items-center gap-2">
+            Logout
+        </a>
+
+    </nav>
+    <b>Log</b>
     </nav>
 
     <div class="content">
