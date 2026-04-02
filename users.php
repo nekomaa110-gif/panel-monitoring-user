@@ -39,6 +39,7 @@ LEFT JOIN radcheck rc ON u.username = rc.username
 LEFT JOIN radusergroup rug ON u.username = rug.username
 
 WHERE LOWER(u.username) LIKE LOWER('%$search%')
+  AND u.username NOT LIKE '5K%'
 
 GROUP BY u.username
 ORDER BY u.username
@@ -151,6 +152,7 @@ ORDER BY u.username
                 <thead class="table-dark">
 
                     <tr>
+                        <th>No</th>
                         <th>Username</th>
                         <th>Password</th>
                         <th>Profile</th>
@@ -166,6 +168,7 @@ ORDER BY u.username
                     <?php
 
                     $found = false;
+                    $no = 1;
 
                     while ($r = $q->fetch_assoc()) {
 
@@ -197,9 +200,10 @@ ORDER BY u.username
 
                         <tr>
 
+                            <td><?php echo $no++; ?></td>
                             <td><?php echo $r['username']; ?></td>
 
-                            <td><?php echo $r['password']; ?></td>
+                            <td><?php echo $r['password'] !== null && $r['password'] !== '' ? $r['password'] : '-'; ?></td>
 
                             <td><?php echo $r['profile']; ?></td>
 
@@ -260,7 +264,7 @@ ORDER BY u.username
 
                         <tr>
 
-                            <td colspan="6">
+                            <td colspan="7">
 
                                 <div class="alert alert-warning m-2">
                                     User tidak ditemukan

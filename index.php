@@ -161,6 +161,7 @@ LIMIT 20
 
                             <tr>
 
+                                <th>No</th>
                                 <th>User</th>
                                 <th>IP</th>
                                 <th>Login Time</th>
@@ -171,10 +172,12 @@ LIMIT 20
 
                         <tbody>
 
+                            <?php $noOnline = 1; ?>
                             <?php while ($o = $online_list->fetch_assoc()) { ?>
 
                                 <tr>
 
+                                    <td><?php echo $noOnline++; ?></td>
                                     <td><?php echo $o['username'] ?></td>
                                     <td><?php echo $o['framedipaddress'] ?></td>
                                     <td><?php echo $o['acctstarttime'] ?></td>
@@ -203,6 +206,7 @@ LIMIT 20
 
                             <tr>
 
+                                <th>No</th>
                                 <th>User</th>
                                 <th>NAS</th>
                                 <th>Login Time</th>
@@ -213,10 +217,12 @@ LIMIT 20
 
                         <tbody>
 
+                            <?php $noLog = 1; ?>
                             <?php while ($r = $log->fetch_assoc()) { ?>
 
                                 <tr>
 
+                                    <td><?php echo $noLog++; ?></td>
                                     <td><?php echo $r['username'] ?></td>
                                     <td><?php echo $r['nasipaddress'] ?></td>
                                     <td><?php echo $r['acctstarttime'] ?></td>

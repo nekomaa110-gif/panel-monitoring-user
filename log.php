@@ -110,6 +110,7 @@ function indoDate($date)
 
                 <thead class="table-dark">
                     <tr>
+                        <th>No</th>
                         <th>Waktu</th>
                         <th>User</th>
                         <th>Status</th>
@@ -122,6 +123,7 @@ function indoDate($date)
                     <?php
 
                     $count = 0;
+                    $no = 1;
 
                     foreach ($lines as $line) {
 
@@ -171,6 +173,7 @@ function indoDate($date)
                         $badge = $status == "Login Sukses" ? "success" : "danger";
 
                         echo "<tr>";
+                        echo "<td>" . $no++ . "</td>";
                         echo "<td>" . indoDate($time_val) . "</td>";
                         echo "<td>" . $user . "</td>";
                         echo "<td><span class='badge bg-$badge'>$status</span></td>";

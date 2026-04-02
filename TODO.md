@@ -22,3 +22,7 @@
 
 - [x] Validasi cepat sintaks PHP file yang diubah
 - [x] Ringkasan perubahan
+
+- [x] Update query users.php: fallback password dari voucher
+- [x] Update tampilan kolom password agar tampil '-' jika kosong
+- [x] Verifikasi perubahan

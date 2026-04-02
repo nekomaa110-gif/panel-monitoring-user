@@ -137,6 +137,7 @@ ORDER BY groupname
                         <table class="table table-bordered">
                             <thead class="table-dark">
                                 <tr>
+                                    <th>No</th>
                                     <th>Nama Profil</th>
                                     <th width="120">Aksi</th>
                                 </tr>
@@ -144,9 +145,11 @@ ORDER BY groupname
 
                             <tbody>
 
+                                <?php $no = 1; ?>
                                 <?php while ($row = $q->fetch_assoc()) { ?>
 
                                     <tr>
+                                        <td><?php echo $no++; ?></td>
                                         <td><?php echo $row['groupname']; ?></td>
                                         <td>
                                             <a href="?hapus=<?php echo $row['groupname']; ?>"
