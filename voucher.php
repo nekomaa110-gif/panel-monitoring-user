@@ -29,11 +29,32 @@ function sessionTimeoutByPaket(string $paket): int
 {
     $n = normalizeProfileName($paket);
 
+    if ($n === 'mingguan' || strpos($n, '7hari') !== false) {
+        return 7 * 24 * 3600;
+    }
+
     if (strpos($n, '5jam') !== false || preg_match('/(^|[^0-9])5([^0-9]|$)/', $paket)) {
         return 5 * 3600;
     }
 
     return 4 * 3600;
+}
+
+function hargaByPaket(mysqli $conn, string $paket): int
+{
+    $harga = 5000;
+    $stmt = $conn->prepare("SELECT harga FROM paket WHERE LOWER(REPLACE(REPLACE(REPLACE(durasi,' ',''),'-',''),'_','')) = ? LIMIT 1");
+    if ($stmt) {
+        $key = normalizeProfileName($paket);
+        $stmt->bind_param("s", $key);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res && ($row = $res->fetch_assoc())) {
+            $harga = (int)$row['harga'];
+        }
+        $stmt->close();
+    }
+    return $harga;
 }
 
 /* =======================
@@ -81,17 +102,7 @@ if (isset($_POST['generate'])) {
         $paket = $groupname;
     }
 
-    $hargaVoucher = 5000;
-    $stmtHarga = $conn->prepare("SELECT harga FROM paket WHERE durasi=? LIMIT 1");
-    if ($stmtHarga) {
-        $stmtHarga->bind_param("s", $paket);
-        $stmtHarga->execute();
-        $resHarga = $stmtHarga->get_result();
-        if ($resHarga && ($rowHarga = $resHarga->fetch_assoc())) {
-            $hargaVoucher = (int)$rowHarga['harga'];
-        }
-        $stmtHarga->close();
-    }
+    $hargaVoucher = hargaByPaket($conn, $paket);
 
     for ($i = 0; $i < $jumlah; $i++) {
         $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
@@ -198,7 +209,7 @@ $paket = $_POST['paket'] ?? $defaultPaket;
 $q = $conn->query("SELECT * FROM paket WHERE durasi='$paket'");
 $data = $q ? $q->fetch_assoc() : null;
 $harga = $data['harga'] ?? 5000;
-$vouchers = $conn->query("SELECT * FROM voucher ORDER BY id DESC")->fetch_all(MYSQLI_ASSOC);
+$vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -284,10 +295,10 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id DESC")->fetch_all(MY
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $no = 1; ?>
-                        <?php foreach ($vouchers as $v): ?>
+                        <?php $no = count($vouchers); ?>
+                        <?php foreach (array_reverse($vouchers) as $v): ?>
                             <tr>
-                                <td><?= $no++ ?></td>
+                                <td><?= $no-- ?></td>
                                 <td><?= htmlspecialchars($v['username']) ?></td>
                                 <td><code><?= htmlspecialchars($v['password']) ?></code></td>
                                 <td><?= htmlspecialchars($v['paket']) ?></td>
