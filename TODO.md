@@ -1,4 +1,14 @@
-- [x] Update voucher generation flow to map paket to matching RADIUS profile group
-- [x] Auto-assign generated voucher usernames into radusergroup with dedup protection
-- [x] Verify DB sync for latest 4jam vouchers via SQL checks
-- [ ] Create branch `blackboxai/fix-voucher-profile-sync`, commit, push, and open PR
+# TODO - Sinkron paket voucher dengan profil DB
+
+- [x] Analisis kebutuhan:
+  - Sesuaikan paket "5 jam" dan "mingguan"
+  - Ubah nama option di voucher.php agar sinkron dengan nama profil di DB
+- [x] Update `voucher.php`:
+  - Ambil daftar profil dari DB (radgroupcheck/radgroupreply)
+  - Buat mapping normalisasi untuk pencocokan:
+    - "5jam" -> "5 jam"
+    - "7hari" -> "mingguan"
+  - Ganti option hardcoded dengan option dinamis dari profil DB
+  - Pastikan proses generate tetap bisa assign `radusergroup` sesuai profil terpilih
+- [x] Validasi cepat sintaks PHP file yang diubah
+- [x] Ringkasan perubahan

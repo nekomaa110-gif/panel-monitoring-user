@@ -3,29 +3,71 @@ require "auth.php";
 require "config/db.php";
 
 /* =======================
+   HELPERS
+======================= */
+function normalizeProfileName(string $name): string
+{
+    $n = strtolower(trim($name));
+    $n = str_replace([' ', '-', '_'], '', $n);
+
+    // sinkronisasi alias lama -> nama profil
+    if ($n === '5jam') {
+        return '5jam';
+    }
+
+    if ($n === '7hari' || $n === 'mingguan') {
+        return 'mingguan';
+    }
+
+    return $n;
+}
+
+/* =======================
+   AMBIL SEMUA PROFIL
+======================= */
+$profiles = [];
+$resProfiles = $conn->query("
+    SELECT DISTINCT groupname
+    FROM (
+        SELECT groupname FROM radgroupcheck
+        UNION
+        SELECT groupname FROM radgroupreply
+    ) g
+    WHERE groupname IS NOT NULL AND groupname <> ''
+    ORDER BY groupname
+");
+if ($resProfiles) {
+    while ($row = $resProfiles->fetch_assoc()) {
+        $profiles[] = $row['groupname'];
+    }
+}
+
+/* =======================
    GENERATE VOUCHER
 ======================= */
 if (isset($_POST['generate'])) {
     $paket = trim($_POST['paket']);
     $jumlah = (int)$_POST['jumlah'];
 
-    // cari groupname yang paling cocok untuk paket (mis. 4jam -> 4 jam)
+    // cari groupname yang paling cocok untuk paket/profil terpilih
     $groupname = null;
-    $stmtGroup = $conn->prepare("
-        SELECT groupname
-        FROM (
-            SELECT groupname FROM radgroupcheck
-            UNION
-            SELECT groupname FROM radgroupreply
-        ) g
-        WHERE REPLACE(REPLACE(LOWER(groupname), ' ', ''), '-', '') = REPLACE(REPLACE(LOWER(?), ' ', ''), '-', '')
-        LIMIT 1
-    ");
-    $stmtGroup->bind_param("s", $paket);
-    $stmtGroup->execute();
-    $resGroup = $stmtGroup->get_result();
-    if ($resGroup && $resGroup->num_rows > 0) {
-        $groupname = $resGroup->fetch_assoc()['groupname'];
+    $normalizedInput = normalizeProfileName($paket);
+
+    foreach ($profiles as $p) {
+        if (normalizeProfileName($p) === $normalizedInput) {
+            $groupname = $p;
+            break;
+        }
+    }
+
+    // fallback: jika user pilih langsung nama group
+    if (empty($groupname) && in_array($paket, $profiles, true)) {
+        $groupname = $paket;
+    }
+
+    // gunakan nama profil DB sebagai paket jika ketemu, agar sinkron
+    if (!empty($groupname)) {
+        $paket = $groupname;
     }
 
     for ($i = 0; $i < $jumlah; $i++) {
@@ -86,10 +128,11 @@ if (isset($_POST['import'])) {
    AMBIL DATA
 ======================= */
 
-$paket = $_POST['paket'] ?? '4jam';
+$defaultPaket = $profiles[0] ?? '4 jam';
+$paket = $_POST['paket'] ?? $defaultPaket;
 $q = $conn->query("SELECT * FROM paket WHERE durasi='$paket'");
-$data = $q->fetch_assoc();
-$harga = $data['harga'];
+$data = $q ? $q->fetch_assoc() : null;
+$harga = $data['harga'] ?? 5000;
 $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id DESC")->fetch_all(MYSQLI_ASSOC);
 ?>
 
@@ -123,9 +166,16 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id DESC")->fetch_all(MY
                     <div class="col-md-4">
                         <label class="form-label">Paket</label>
                         <select name="paket" class="form-select">
-                            <option value="4jam">4 jam</option>
-                            <option value="5jam">5 jam</option>
-                            <option value="7hari">7 hari</option>
+                            <?php if (!empty($profiles)): ?>
+                                <?php foreach ($profiles as $profileName): ?>
+                                    <option value="<?= htmlspecialchars($profileName) ?>" <?= $paket === $profileName ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($profileName) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="5 jam" <?= $paket === '5 jam' ? 'selected' : '' ?>>5 jam</option>
+                                <option value="mingguan" <?= $paket === 'mingguan' ? 'selected' : '' ?>>mingguan</option>
+                            <?php endif; ?>
                         </select>
                     </div>
                     <div class="col-md-4">
