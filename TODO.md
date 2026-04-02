@@ -26,3 +26,7 @@
 - [x] Update query users.php: fallback password dari voucher
 - [x] Update tampilan kolom password agar tampil '-' jika kosong
 - [x] Verifikasi perubahan
+
+- [x] Fix harga voucher mingguan dari tabel paket (dinamis, bukan hardcode)
+- [x] Seragamkan tabel voucher: hapus kolom ID, gunakan No saja
+- [x] Verifikasi sintaks PHP voucher.php

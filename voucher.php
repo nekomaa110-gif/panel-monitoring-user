@@ -81,14 +81,25 @@ if (isset($_POST['generate'])) {
         $paket = $groupname;
     }
 
+    $hargaVoucher = 5000;
+    $stmtHarga = $conn->prepare("SELECT harga FROM paket WHERE durasi=? LIMIT 1");
+    if ($stmtHarga) {
+        $stmtHarga->bind_param("s", $paket);
+        $stmtHarga->execute();
+        $resHarga = $stmtHarga->get_result();
+        if ($resHarga && ($rowHarga = $resHarga->fetch_assoc())) {
+            $hargaVoucher = (int)$rowHarga['harga'];
+        }
+        $stmtHarga->close();
+    }
+
     for ($i = 0; $i < $jumlah; $i++) {
         $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
         $pass = (string) rand(1000, 9999);
 
         $stmtVoucher = $conn->prepare("INSERT INTO voucher (username,password,paket,harga,status) VALUES (?,?,?,?,?)");
-        $harga = 5000;
         $statusBaru = 'baru';
-        $stmtVoucher->bind_param("sssds", $user, $pass, $paket, $harga, $statusBaru);
+        $stmtVoucher->bind_param("sssis", $user, $pass, $paket, $hargaVoucher, $statusBaru);
         $stmtVoucher->execute();
 
         // Cleartext-Password
@@ -264,7 +275,6 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id DESC")->fetch_all(MY
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>ID</th>
                             <th>Username</th>
                             <th>Password</th>
                             <th>Paket</th>
@@ -278,7 +288,6 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id DESC")->fetch_all(MY
                         <?php foreach ($vouchers as $v): ?>
                             <tr>
                                 <td><?= $no++ ?></td>
-                                <td><?= $v['id'] ?></td>
                                 <td><?= htmlspecialchars($v['username']) ?></td>
                                 <td><code><?= htmlspecialchars($v['password']) ?></code></td>
                                 <td><?= htmlspecialchars($v['paket']) ?></td>
