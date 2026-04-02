@@ -42,10 +42,24 @@ function sessionTimeoutByPaket(string $paket): int
 
 function hargaByPaket(mysqli $conn, string $paket): int
 {
+    $n = normalizeProfileName($paket);
+
+    if ($n === 'mingguan' || strpos($n, '7hari') !== false) {
+        return 55000;
+    }
+
+    if ($n === '5jam') {
+        return 5000;
+    }
+
+    if ($n === '4jam') {
+        return 5000;
+    }
+
     $harga = 5000;
     $stmt = $conn->prepare("SELECT harga FROM paket WHERE LOWER(REPLACE(REPLACE(REPLACE(durasi,' ',''),'-',''),'_','')) = ? LIMIT 1");
     if ($stmt) {
-        $key = normalizeProfileName($paket);
+        $key = $n;
         $stmt->bind_param("s", $key);
         $stmt->execute();
         $res = $stmt->get_result();
