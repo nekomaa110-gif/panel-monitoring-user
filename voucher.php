@@ -99,83 +99,38 @@ if (isset($_POST['generate'])) {
     $jumlah = (int)$_POST['jumlah'];
 
     $groupname = null;
-    $normalizedInput = normalizeProfileName($paket);
-
-    foreach ($profiles as $p) {
-        if (normalizeProfileName($p) === $normalizedInput) {
-            $groupname = $p;
-            break;
-        }
+    $stmtGroup = $conn->prepare("
+        SELECT groupname
+        FROM (
+            SELECT groupname FROM radgroupcheck
+            UNION
+            SELECT groupname FROM radgroupreply
+        ) g
+        WHERE REPLACE(REPLACE(LOWER(groupname), ' ', ''), '-', '') = REPLACE(REPLACE(LOWER(?), ' ', ''), '-', '')
+        LIMIT 1
+    ");
+    $stmtGroup->bind_param("s", $paket);
+    $stmtGroup->execute();
+    $resGroup = $stmtGroup->get_result();
+    if ($resGroup && $resGroup->num_rows > 0) {
+        $groupname = $resGroup->fetch_assoc()['groupname'];
     }
-
-    if (empty($groupname) && in_array($paket, $profiles, true)) {
-        $groupname = $paket;
-    }
-
-    if (!empty($groupname)) {
-        $paket = $groupname;
-    }
-
-    $hargaVoucher = hargaByPaket($conn, $paket);
 
     for ($i = 0; $i < $jumlah; $i++) {
         $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
         $pass = (string) rand(1000, 9999);
 
-        $stmtVoucher = $conn->prepare("INSERT INTO voucher (username,password,paket,harga,status) VALUES (?,?,?,?,?)");
-        $statusBaru = 'baru';
-        $stmtVoucher->bind_param("sssis", $user, $pass, $paket, $hargaVoucher, $statusBaru);
-        $stmtVoucher->execute();
+        $stmt = $conn->prepare("INSERT INTO voucher (username,password,paket,harga) VALUES (?,?,?,?)");
+        $harga = 5000;
+        $stmt->bind_param("sssi", $user, $pass, $paket, $harga);
+        $stmt->execute();
 
-        // Cleartext-Password
-        $stmtDelPwd = $conn->prepare("DELETE FROM radcheck WHERE username=? AND attribute='Cleartext-Password'");
-        $stmtDelPwd->bind_param("s", $user);
-        $stmtDelPwd->execute();
-
-        $stmtInsPwd = $conn->prepare("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES (?, 'Cleartext-Password', ':=', ?)
-        ");
-        $stmtInsPwd->bind_param("ss", $user, $pass);
-        $stmtInsPwd->execute();
-
-        // Session-Timeout 4/5 jam total pemakaian
-        $sessionTimeout = (string) sessionTimeoutByPaket($paket);
-
-        $stmtDelTimeout = $conn->prepare("DELETE FROM radcheck WHERE username=? AND attribute='Session-Timeout'");
-        $stmtDelTimeout->bind_param("s", $user);
-        $stmtDelTimeout->execute();
-
-        $stmtInsTimeout = $conn->prepare("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES (?, 'Session-Timeout', ':=', ?)
-        ");
-        $stmtInsTimeout->bind_param("ss", $user, $sessionTimeout);
-        $stmtInsTimeout->execute();
-
-        // Expiration hangus 1 hari (23:59)
-        $expiration = date("d M Y 23:59", strtotime("+1 day"));
-
-        $stmtDelExp = $conn->prepare("DELETE FROM radcheck WHERE username=? AND attribute='Expiration'");
-        $stmtDelExp->bind_param("s", $user);
-        $stmtDelExp->execute();
-
-        $stmtInsExp = $conn->prepare("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES (?, 'Expiration', ':=', ?)
-        ");
-        $stmtInsExp->bind_param("ss", $user, $expiration);
-        $stmtInsExp->execute();
-
-        // Group assignment
+        // auto assign voucher user ke group radius jika profile ditemukan
         if (!empty($groupname)) {
-            $stmtDelGroup = $conn->prepare("DELETE FROM radusergroup WHERE username=?");
-            $stmtDelGroup->bind_param("s", $user);
-            $stmtDelGroup->execute();
-
             $stmtAssign = $conn->prepare("
                 INSERT INTO radusergroup (username,groupname,priority)
                 VALUES (?,?,0)
+                ON DUPLICATE KEY UPDATE groupname=VALUES(groupname), priority=VALUES(priority)
             ");
             $stmtAssign->bind_param("ss", $user, $groupname);
             $stmtAssign->execute();

@@ -1,0 +1,12 @@
+RewriteEngine on
+RewriteBase /zeronet/
+
+# Route actions/xxx → actions/xxx.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^actions/([a-zA-Z0-9_-]+)$ actions/$1.php [L]
+
+# Route xxx → xxx.php (clean URL)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9_-]+)$ $1.php [L]
