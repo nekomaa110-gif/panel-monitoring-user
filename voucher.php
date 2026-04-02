@@ -6,8 +6,27 @@ require "config/db.php";
    GENERATE VOUCHER
 ======================= */
 if (isset($_POST['generate'])) {
-    $paket = $_POST['paket'];
+    $paket = trim($_POST['paket']);
     $jumlah = (int)$_POST['jumlah'];
+
+    // cari groupname yang paling cocok untuk paket (mis. 4jam -> 4 jam)
+    $groupname = null;
+    $stmtGroup = $conn->prepare("
+        SELECT groupname
+        FROM (
+            SELECT groupname FROM radgroupcheck
+            UNION
+            SELECT groupname FROM radgroupreply
+        ) g
+        WHERE REPLACE(REPLACE(LOWER(groupname), ' ', ''), '-', '') = REPLACE(REPLACE(LOWER(?), ' ', ''), '-', '')
+        LIMIT 1
+    ");
+    $stmtGroup->bind_param("s", $paket);
+    $stmtGroup->execute();
+    $resGroup = $stmtGroup->get_result();
+    if ($resGroup && $resGroup->num_rows > 0) {
+        $groupname = $resGroup->fetch_assoc()['groupname'];
+    }
 
     for ($i = 0; $i < $jumlah; $i++) {
         $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
@@ -17,9 +36,22 @@ if (isset($_POST['generate'])) {
         $harga = 5000;
         $stmt->bind_param("sssi", $user, $pass, $paket, $harga);
         $stmt->execute();
+
+        // auto assign voucher user ke group radius jika profile ditemukan
+        if (!empty($groupname)) {
+            $stmtAssign = $conn->prepare("
+                INSERT INTO radusergroup (username,groupname,priority)
+                VALUES (?,?,0)
+                ON DUPLICATE KEY UPDATE groupname=VALUES(groupname), priority=VALUES(priority)
+            ");
+            $stmtAssign->bind_param("ss", $user, $groupname);
+            $stmtAssign->execute();
+        }
     }
 
-    $msg = "Voucher berhasil dibuat";
+    $msg = !empty($groupname)
+        ? "Voucher berhasil dibuat dan tersinkron ke profile '$groupname'"
+        : "Voucher berhasil dibuat (profil RADIUS belum ditemukan untuk paket '$paket')";
 }
 
 /* =======================

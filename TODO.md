@@ -1,8 +1,4 @@
-# TODO: Fix Voucher Layout
-
-## Plan Steps:
-
-- [ ] Cleanup assets/style.css (remove duplicate sidebar rules)
-- [ ] Major edit voucher.php (add .content wrapper, Bootstrap styling, fix PHP bug)
-- [ ] Test layout & functionality
-- [ ] Check users.php if similar issues
+- [x] Update voucher generation flow to map paket to matching RADIUS profile group
+- [x] Auto-assign generated voucher usernames into radusergroup with dedup protection
+- [x] Verify DB sync for latest 4jam vouchers via SQL checks
+- [ ] Create branch `blackboxai/fix-voucher-profile-sync`, commit, push, and open PR
