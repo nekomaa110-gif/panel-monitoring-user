@@ -72,23 +72,83 @@ if (isset($_POST['generate'])) {
 
     for ($i = 0; $i < $jumlah; $i++) {
         $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
-        $pass = rand(1000, 9999);
+        $pass = (string) rand(1000, 9999);
 
         $stmt = $conn->prepare("INSERT INTO voucher (username,password,paket,harga) VALUES (?,?,?,?)");
         $harga = 5000;
         $stmt->bind_param("sssi", $user, $pass, $paket, $harga);
         $stmt->execute();
 
+        // sinkron password ke radius supaya tampil di panel pelanggan (users.php ambil dari radcheck)
+        // radcheck tidak punya unique key untuk (username,attribute), jadi pakai delete + insert agar tidak duplikat
+        $stmtDelPwd = $conn->prepare("
+            DELETE FROM radcheck
+            WHERE username=? AND attribute='Cleartext-Password'
+        ");
+        $stmtDelPwd->bind_param("s", $user);
+        $stmtDelPwd->execute();
+
+        $stmtInsPwd = $conn->prepare("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES (?, 'Cleartext-Password', ':=', ?)
+        ");
+        $stmtInsPwd->bind_param("ss", $user, $pass);
+        $stmtInsPwd->execute();
+
+        // kebijakan voucher baru:
+        // - total pemakaian 4/5 jam (Session-Timeout)
+        // - hangus dalam 1 hari (Expiration jam 23:59)
+        $sessionTimeout = 4 * 3600;
+        $paketNorm = strtolower(trim($paket));
+        if (strpos($paketNorm, '5') !== false) {
+            $sessionTimeout = 5 * 3600;
+        }
+
+        $expiration = date("d M Y 23:59", strtotime("+1 day"));
+
+        $stmtDelTimeout = $conn->prepare("
+            DELETE FROM radcheck
+            WHERE username=? AND attribute='Session-Timeout'
+        ");
+        $stmtDelTimeout->bind_param("s", $user);
+        $stmtDelTimeout->execute();
+
+        $stmtInsTimeout = $conn->prepare("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES (?, 'Session-Timeout', ':=', ?)
+        ");
+        $timeoutValue = (string) $sessionTimeout;
+        $stmtInsTimeout->bind_param("ss", $user, $timeoutValue);
+        $stmtInsTimeout->execute();
+
+        $stmtDelExp = $conn->prepare("
+            DELETE FROM radcheck
+            WHERE username=? AND attribute='Expiration'
+        ");
+        $stmtDelExp->bind_param("s", $user);
+        $stmtDelExp->execute();
+
+        $stmtInsExp = $conn->prepare("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES (?, 'Expiration', ':=', ?)
+        ");
+        $stmtInsExp->bind_param("ss", $user, $expiration);
+        $stmtInsExp->execute();
+
         // auto assign voucher user ke group radius jika profile ditemukan
         if (!empty($groupname)) {
+            $stmtDelGroup = $conn->prepare("
+                DELETE FROM radusergroup
+                WHERE username=?
+            ");
+            $stmtDelGroup->bind_param("s", $user);
+            $stmtDelGroup->execute();
+
             $stmtAssign = $conn->prepare("
                 INSERT INTO radusergroup (username,groupname,priority)
                 VALUES (?,?,0)
-                ON DUPLICATE KEY UPDATE groupname=VALUES(groupname), priority=VALUES(priority)
-            ");
-            $stmtAssign->bind_param("ss", $user, $groupname);
-            $stmtAssign->execute();
-        }
+<execute_command>
+<command>php -r 'require "config/db.php"; $r=$conn->query("SELECT username,password FROM voucher ORDER BY id DESC LIMIT 5")->fetch_all(MYSQLI_ASSOC); print_r($r); echo "\n"; $r2=$conn->query("SELECT username,attribute,value FROM radcheck WHERE attribute=\"Cleartext-Password\" ORDER BY id DESC LIMIT 5")->fetch_all(MYSQLI_ASSOC); print_r($r2);'</command>
     }
 
     $msg = !empty($groupname)
