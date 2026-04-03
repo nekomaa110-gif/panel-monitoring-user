@@ -84,9 +84,6 @@ function indoDate($date)
 
             <div>
                 <h3 class="mb-1">Riwayat Login User RADIUS</h3>
-                <small class="text-muted">
-                    Menampilkan log autentikasi user internet (RADIUS), bukan login admin panel.
-                </small>
             </div>
 
             <form method="GET" class="d-flex">

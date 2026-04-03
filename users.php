@@ -90,62 +90,60 @@ ORDER BY u.username
     </nav>
     <div class="content p-4">
 
-        <h3 class="mb-4">Daftar Pelanggan dan Status</h3>
-
-        <div class="d-flex justify-content-between mb-3">
-
-            <ul class="nav nav-tabs">
-
-                <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "") echo "active"; ?>"
-                        href="users.php?search=<?php echo $search; ?>">
-                        Semua
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "online") echo "active"; ?>"
-                        href="users.php?filter=online&search=<?php echo $search; ?>">
-                        Online
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>"
-                        href="users.php?filter=expired&search=<?php echo $search; ?>">
-                        Kadaluarsa
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>"
-                        href="users.php?filter=disabled&search=<?php echo $search; ?>">
-                        Dinonaktifkan
-                    </a>
-                </li>
-
-            </ul>
-
-            <form method="GET" class="d-flex">
-
-                <input type="hidden" name="filter" value="<?php echo $filter; ?>">
-
-                <input
-                    type="text"
-                    name="search"
-                    class="form-control me-2"
-                    placeholder="Cari user..."
-                    value="<?php echo $search; ?>">
-
-                <button class="btn btn-primary">
-                    Cari
-                </button>
-
-            </form>
-
+        <div class="customers-header mb-4">
+            <h3 class="mb-1">Daftar Pelanggan dan Status</h3>
         </div>
 
-        <div class="table-scroll">
+        <div class="customers-toolbar mb-3">
+            <div class="customers-toolbar-inner">
+                <ul class="nav customer-tabs customers-submenu">
+                    <li class="nav-item">
+                        <a class="nav-link <?php if ($filter == "") echo "active"; ?>"
+                            href="users.php?search=<?php echo urlencode($search); ?>">
+                            Semua
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link <?php if ($filter == "online") echo "active"; ?>"
+                            href="users.php?filter=online&search=<?php echo urlencode($search); ?>">
+                            Online
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>"
+                            href="users.php?filter=expired&search=<?php echo urlencode($search); ?>">
+                            Kadaluarsa
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>"
+                            href="users.php?filter=disabled&search=<?php echo urlencode($search); ?>">
+                            Dinonaktifkan
+                        </a>
+                    </li>
+                </ul>
+
+                <form method="GET" class="customer-search-form">
+                    <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control"
+                        placeholder="Cari user..."
+                        value="<?php echo htmlspecialchars($search); ?>">
+
+                    <button class="btn btn-primary" type="submit">
+                        Cari
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-scroll customers-table-wrap">
 
             <table class="table table-striped text-center">
 
