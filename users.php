@@ -75,6 +75,28 @@ $q = $stmtUsers->get_result();
             font-size: 14px;
             padding: 6px 10px;
         }
+
+        .btn-action-uniform {
+            width: 96px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .status-icon-uniform {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+            font-size: 16px;
+        }
     </style>
 
 </head>
@@ -238,11 +260,11 @@ $q = $stmtUsers->get_result();
                                 } else {
 
                                     if ($status == "NONAKTIF") {
-                                        echo '<span class="badge bg-danger">⦸</span>';
+                                        echo '<span class="badge bg-danger status-icon-uniform">⦸</span>';
                                     } elseif ($status == "EXPIRED") {
-                                        echo '<span class="badge bg-warning text-dark">✖</span>';
+                                        echo '<span class="badge bg-warning text-dark status-icon-uniform">✖</span>';
                                     } else {
-                                        echo '<span class="badge bg-success">✔</span>';
+                                        echo '<span class="badge bg-success status-icon-uniform">✔</span>';
                                     }
                                 }
 
@@ -256,14 +278,14 @@ $q = $stmtUsers->get_result();
 
                                     <a
                                         href="actions/enable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
-                                        class="btn btn-sm btn-success">
+                                        class="btn btn-sm btn-success btn-action-uniform">
                                         Aktifkan </a>
 
                                 <?php } else { ?>
 
                                     <a
                                         href="actions/disable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
-                                        class="btn btn-sm btn-danger">
+                                        class="btn btn-sm btn-danger btn-action-uniform">
                                         Nonaktifkan </a>
 
                                 <?php } ?>
