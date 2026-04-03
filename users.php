@@ -16,12 +16,12 @@ WHERE acctstoptime IS NULL
 ");
 
 while ($o = $online_q->fetch_assoc()) {
-    $onlineUsers[] = $o['username'];
+    $onlineUsers[$o['username']] = true;
 }
 
 /* AMBIL DATA USER */
 
-$q = $conn->query("
+$stmtUsers = $conn->prepare("
 SELECT
 u.username,
 MAX(CASE WHEN rc.attribute='Cleartext-Password' THEN rc.value END) AS password,
@@ -38,12 +38,16 @@ SELECT DISTINCT username FROM radusergroup
 LEFT JOIN radcheck rc ON u.username = rc.username
 LEFT JOIN radusergroup rug ON u.username = rug.username
 
-WHERE LOWER(u.username) LIKE LOWER('%$search%')
+WHERE LOWER(u.username) LIKE LOWER(?)
   AND u.username NOT LIKE '5K%'
 
 GROUP BY u.username
 ORDER BY u.username
 ");
+$searchLike = '%' . $search . '%';
+$stmtUsers->bind_param("s", $searchLike);
+$stmtUsers->execute();
+$q = $stmtUsers->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -143,6 +147,13 @@ ORDER BY u.username
             </div>
         </div>
 
+        <div class="d-flex justify-content-end align-items-center mb-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="toggle-password">
+                <label class="form-check-label" for="toggle-password">Tampilkan Password</label>
+            </div>
+        </div>
+
         <div class="table-scroll customers-table-wrap">
 
             <table class="table table-striped text-center">
@@ -182,16 +193,12 @@ ORDER BY u.username
                             $status = "EXPIRED";
                         }
 
-                        $isOnline = in_array($r['username'], $onlineUsers);
+                        $isOnline = isset($onlineUsers[$r['username']]);
 
                         /* FILTER TAB */
-
-                        if ($search == "") {
-
-                            if ($filter == "online" && !$isOnline) continue;
-                            if ($filter == "expired" && $status != "EXPIRED") continue;
-                            if ($filter == "disabled" && $status != "NONAKTIF") continue;
-                        }
+                        if ($filter == "online" && !$isOnline) continue;
+                        if ($filter == "expired" && $status != "EXPIRED") continue;
+                        if ($filter == "disabled" && $status != "NONAKTIF") continue;
 
                         $found = true;
                     ?>
@@ -201,11 +208,26 @@ ORDER BY u.username
                             <td><?php echo $no++; ?></td>
                             <td><?php echo $r['username']; ?></td>
 
-                            <td><?php echo $r['password'] !== null && $r['password'] !== '' ? $r['password'] : '-'; ?></td>
+                            <td>
+                                <?php
+                                $plainPassword = (string)($r['password'] ?? '');
+                                if ($plainPassword === '') {
+                                    echo '-';
+                                } else {
+                                    $maskedPassword = str_repeat('*', max(6, strlen($plainPassword)));
+                                ?>
+                                    <code
+                                        class="password-cell"
+                                        data-masked="<?php echo htmlspecialchars($maskedPassword); ?>"
+                                        data-plain="<?php echo htmlspecialchars($plainPassword); ?>">
+                                        <?php echo htmlspecialchars($maskedPassword); ?>
+                                    </code>
+                                <?php } ?>
+                            </td>
 
                             <td><?php echo $r['profile']; ?></td>
 
-                            <td><?php echo $r['expiration']; ?></td>
+                            <td><?php echo !empty($r['expiration']) && strtotime($r['expiration']) !== false ? date('d M Y H:i', strtotime($r['expiration'])) : '-'; ?></td>
 
                             <td>
 
@@ -281,6 +303,20 @@ ORDER BY u.username
         </div>
 
     </div>
+
+    <script>
+        const togglePassword = document.getElementById('toggle-password');
+        const passwordCells = document.querySelectorAll('.password-cell');
+
+        if (togglePassword) {
+            togglePassword.addEventListener('change', function() {
+                const showPlain = togglePassword.checked;
+                passwordCells.forEach(el => {
+                    el.textContent = showPlain ? el.dataset.plain : el.dataset.masked;
+                });
+            });
+        }
+    </script>
 
 </body>
 

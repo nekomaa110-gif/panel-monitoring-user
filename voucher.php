@@ -40,34 +40,25 @@ function sessionTimeoutByPaket(string $paket): int
     return 4 * 3600;
 }
 
-function hargaByPaket(mysqli $conn, string $paket): int
+function hargaByPaket(mysqli $conn, string $paket): ?int
 {
     $n = normalizeProfileName($paket);
 
-    if ($n === 'mingguan' || strpos($n, '7hari') !== false) {
-        return 55000;
-    }
-
-    if ($n === '5jam') {
-        return 5000;
-    }
-
-    if ($n === '4jam') {
-        return 5000;
-    }
-
-    $harga = 5000;
     $stmt = $conn->prepare("SELECT harga FROM paket WHERE LOWER(REPLACE(REPLACE(REPLACE(durasi,' ',''),'-',''),'_','')) = ? LIMIT 1");
-    if ($stmt) {
-        $key = $n;
-        $stmt->bind_param("s", $key);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        if ($res && ($row = $res->fetch_assoc())) {
-            $harga = (int)$row['harga'];
-        }
-        $stmt->close();
+    if (!$stmt) {
+        throw new RuntimeException("Prepare failed (hargaByPaket): " . $conn->error);
     }
+
+    $stmt->bind_param("s", $n);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $harga = null;
+
+    if ($res && ($row = $res->fetch_assoc())) {
+        $harga = (int)$row['harga'];
+    }
+
+    $stmt->close();
     return $harga;
 }
 
@@ -95,78 +86,267 @@ if ($resProfiles) {
    GENERATE VOUCHER
 ======================= */
 if (isset($_POST['generate'])) {
-    $paket = trim($_POST['paket']);
-    $jumlah = (int)$_POST['jumlah'];
+    try {
+        $paket = trim((string)($_POST['paket'] ?? ''));
+        $jumlah = (int)($_POST['jumlah'] ?? 0);
 
-    $groupname = null;
-    $stmtGroup = $conn->prepare("
-        SELECT groupname
-        FROM (
-            SELECT groupname FROM radgroupcheck
-            UNION
-            SELECT groupname FROM radgroupreply
-        ) g
-        WHERE REPLACE(REPLACE(LOWER(groupname), ' ', ''), '-', '') = REPLACE(REPLACE(LOWER(?), ' ', ''), '-', '')
-        LIMIT 1
-    ");
-    $stmtGroup->bind_param("s", $paket);
-    $stmtGroup->execute();
-    $resGroup = $stmtGroup->get_result();
-    if ($resGroup && $resGroup->num_rows > 0) {
-        $groupname = $resGroup->fetch_assoc()['groupname'];
-    }
-
-    for ($i = 0; $i < $jumlah; $i++) {
-        $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
-        $pass = (string) rand(1000, 9999);
-
-        $stmt = $conn->prepare("INSERT INTO voucher (username,password,paket,harga) VALUES (?,?,?,?)");
-        $harga = 5000;
-        $stmt->bind_param("sssi", $user, $pass, $paket, $harga);
-        $stmt->execute();
-
-        // auto assign voucher user ke group radius jika profile ditemukan
-        if (!empty($groupname)) {
-            $stmtAssign = $conn->prepare("
-                INSERT INTO radusergroup (username,groupname,priority)
-                VALUES (?,?,0)
-                ON DUPLICATE KEY UPDATE groupname=VALUES(groupname), priority=VALUES(priority)
-            ");
-            $stmtAssign->bind_param("ss", $user, $groupname);
-            $stmtAssign->execute();
+        if ($jumlah <= 0 || $jumlah > 500) {
+            throw new RuntimeException("Jumlah generate harus antara 1 sampai 500.");
         }
-    }
 
-    $msg = !empty($groupname)
-        ? "Voucher berhasil dibuat dan tersinkron ke profile '$groupname'"
-        : "Voucher berhasil dibuat (profil RADIUS belum ditemukan untuk paket '$paket')";
+        $groupname = null;
+        $normalizedInput = normalizeProfileName($paket);
+
+        foreach ($profiles as $p) {
+            if (normalizeProfileName($p) === $normalizedInput) {
+                $groupname = $p;
+                break;
+            }
+        }
+
+        if (empty($groupname) && in_array($paket, $profiles, true)) {
+            $groupname = $paket;
+        }
+
+        if (empty($groupname)) {
+            throw new RuntimeException("Paket tidak valid / tidak terdaftar pada profile.");
+        }
+
+        $paket = $groupname;
+
+        $hargaVoucher = hargaByPaket($conn, $paket);
+        if ($hargaVoucher === null) {
+            throw new RuntimeException("Harga paket tidak ditemukan di tabel paket.");
+        }
+
+        $stmtDupUnion = $conn->prepare("
+            SELECT username FROM voucher WHERE username=?
+            UNION
+            SELECT username FROM radcheck WHERE username=?
+            LIMIT 1
+        ");
+        if (!$stmtDupUnion) throw new RuntimeException("Prepare failed (dup union): " . $conn->error);
+
+        $stmtVoucher = $conn->prepare("INSERT INTO voucher (username,password,paket,harga,status) VALUES (?,?,?,?,?)");
+        if (!$stmtVoucher) throw new RuntimeException("Prepare failed (voucher): " . $conn->error);
+
+        $stmtDelPwd = $conn->prepare("DELETE FROM radcheck WHERE username=? AND attribute='Cleartext-Password'");
+        if (!$stmtDelPwd) throw new RuntimeException("Prepare failed (del pwd): " . $conn->error);
+
+        $stmtInsPwd = $conn->prepare("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES (?, 'Cleartext-Password', ':=', ?)
+        ");
+        if (!$stmtInsPwd) throw new RuntimeException("Prepare failed (ins pwd): " . $conn->error);
+
+        $stmtDelTimeout = $conn->prepare("DELETE FROM radcheck WHERE username=? AND attribute='Session-Timeout'");
+        if (!$stmtDelTimeout) throw new RuntimeException("Prepare failed (del timeout): " . $conn->error);
+
+        $stmtInsTimeout = $conn->prepare("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES (?, 'Session-Timeout', ':=', ?)
+        ");
+        if (!$stmtInsTimeout) throw new RuntimeException("Prepare failed (ins timeout): " . $conn->error);
+
+        $stmtDelExp = $conn->prepare("DELETE FROM radcheck WHERE username=? AND attribute='Expiration'");
+        if (!$stmtDelExp) throw new RuntimeException("Prepare failed (del expiration): " . $conn->error);
+
+        $stmtInsExp = $conn->prepare("
+            INSERT INTO radcheck (username,attribute,op,value)
+            VALUES (?, 'Expiration', ':=', ?)
+        ");
+        if (!$stmtInsExp) throw new RuntimeException("Prepare failed (ins expiration): " . $conn->error);
+
+        $stmtDelGroup = $conn->prepare("DELETE FROM radusergroup WHERE username=?");
+        if (!$stmtDelGroup) throw new RuntimeException("Prepare failed (del group): " . $conn->error);
+
+        $stmtAssign = $conn->prepare("
+            INSERT INTO radusergroup (username,groupname,priority)
+            VALUES (?,?,0)
+        ");
+        if (!$stmtAssign) throw new RuntimeException("Prepare failed (assign group): " . $conn->error);
+
+        $statusBaru = 'baru';
+        $conn->begin_transaction();
+
+        for ($i = 0; $i < $jumlah; $i++) {
+            $user = "5K" . rand(1, 9) . chr(rand(65, 90)) . chr(rand(97, 122));
+            $pass = (string) rand(1000, 9999);
+
+            $stmtDupUnion->bind_param("ss", $user, $user);
+            $stmtDupUnion->execute();
+            $resDup = $stmtDupUnion->get_result();
+            if ($resDup && $resDup->fetch_assoc()) {
+                throw new RuntimeException("Generate gagal: username duplikat terdeteksi ($user).");
+            }
+
+            $stmtVoucher->bind_param("sssis", $user, $pass, $paket, $hargaVoucher, $statusBaru);
+            if (!$stmtVoucher->execute()) {
+                throw new RuntimeException("Execute failed (voucher): " . $stmtVoucher->error);
+            }
+
+            $stmtDelPwd->bind_param("s", $user);
+            if (!$stmtDelPwd->execute()) {
+                throw new RuntimeException("Execute failed (del pwd): " . $stmtDelPwd->error);
+            }
+
+            $stmtInsPwd->bind_param("ss", $user, $pass);
+            if (!$stmtInsPwd->execute()) {
+                throw new RuntimeException("Execute failed (ins pwd): " . $stmtInsPwd->error);
+            }
+
+            $sessionTimeout = (string) sessionTimeoutByPaket($paket);
+
+            $stmtDelTimeout->bind_param("s", $user);
+            if (!$stmtDelTimeout->execute()) {
+                throw new RuntimeException("Execute failed (del timeout): " . $stmtDelTimeout->error);
+            }
+
+            $stmtInsTimeout->bind_param("ss", $user, $sessionTimeout);
+            if (!$stmtInsTimeout->execute()) {
+                throw new RuntimeException("Execute failed (ins timeout): " . $stmtInsTimeout->error);
+            }
+
+            $expiration = date("d M Y 23:59", strtotime("+1 day"));
+
+            $stmtDelExp->bind_param("s", $user);
+            if (!$stmtDelExp->execute()) {
+                throw new RuntimeException("Execute failed (del expiration): " . $stmtDelExp->error);
+            }
+
+            $stmtInsExp->bind_param("ss", $user, $expiration);
+            if (!$stmtInsExp->execute()) {
+                throw new RuntimeException("Execute failed (ins expiration): " . $stmtInsExp->error);
+            }
+
+            $stmtDelGroup->bind_param("s", $user);
+            if (!$stmtDelGroup->execute()) {
+                throw new RuntimeException("Execute failed (del group): " . $stmtDelGroup->error);
+            }
+
+            $stmtAssign->bind_param("ss", $user, $groupname);
+            if (!$stmtAssign->execute()) {
+                throw new RuntimeException("Execute failed (assign group): " . $stmtAssign->error);
+            }
+        }
+
+        $conn->commit();
+
+        $stmtDupUnion->close();
+        $stmtVoucher->close();
+        $stmtDelPwd->close();
+        $stmtInsPwd->close();
+        $stmtDelTimeout->close();
+        $stmtInsTimeout->close();
+        $stmtDelExp->close();
+        $stmtInsExp->close();
+        $stmtDelGroup->close();
+        $stmtAssign->close();
+
+        $msg = "Voucher berhasil dibuat dan tersinkron ke profile '$groupname'";
+    } catch (Throwable $e) {
+        if ($conn->errno === 0) {
+            // no-op for connection-level check
+        }
+        if ($conn->ping()) {
+            @$conn->rollback();
+        }
+        $msg = "Generate gagal (rollback): " . $e->getMessage();
+    }
 }
 
 /* =======================
    IMPORT CSV
 ======================= */
 if (isset($_POST['import'])) {
-    if ($_FILES['csv']['error'] == 0) {
+    try {
+        if (($_FILES['csv']['error'] ?? UPLOAD_ERR_NO_FILE) !== 0) {
+            throw new RuntimeException("Upload gagal");
+        }
+
         $file = $_FILES['csv']['tmp_name'];
+        $lineCount = 0;
+        $countHandle = fopen($file, "r");
+        if (!$countHandle) {
+            throw new RuntimeException("File CSV tidak dapat dibuka");
+        }
+        while (fgetcsv($countHandle, 1000, ",") !== false) {
+            $lineCount++;
+        }
+        fclose($countHandle);
+
+        if ($lineCount > 500) {
+            throw new RuntimeException("Import gagal: jumlah baris CSV melebihi batas 500.");
+        }
+
         $handle = fopen($file, "r");
+        if (!$handle) {
+            throw new RuntimeException("File CSV tidak dapat dibuka");
+        }
 
-        while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-            $username = $data[0] ?? '';
-            $password = $data[1] ?? '';
-            $paketCsv = $data[2] ?? 'unknown';
+        $stmtDupUnion = $conn->prepare("
+            SELECT username FROM voucher WHERE username=?
+            UNION
+            SELECT username FROM radcheck WHERE username=?
+            LIMIT 1
+        ");
+        if (!$stmtDupUnion) throw new RuntimeException("Prepare failed (dup union import): " . $conn->error);
 
-            if ($username && $password) {
-                $stmt = $conn->prepare("INSERT INTO voucher (username,password,paket,harga) VALUES (?,?,?,?)");
-                $harga = 0;
-                $stmt->bind_param("sssi", $username, $password, $paketCsv, $harga);
-                $stmt->execute();
+        $stmtCheckPaket = $conn->prepare("SELECT harga FROM paket WHERE LOWER(REPLACE(REPLACE(REPLACE(durasi,' ',''),'-',''),'_','')) = ? LIMIT 1");
+        if (!$stmtCheckPaket) throw new RuntimeException("Prepare failed (check paket): " . $conn->error);
+
+        $stmtInsertVoucher = $conn->prepare("INSERT INTO voucher (username,password,paket,harga,status) VALUES (?,?,?,?,?)");
+        if (!$stmtInsertVoucher) throw new RuntimeException("Prepare failed (insert voucher): " . $conn->error);
+
+        $inserted = 0;
+        $skipped = 0;
+        $statusBaru = 'baru';
+
+        while (($data = fgetcsv($handle, 1000, ",")) !== false) {
+            $username = trim((string)($data[0] ?? ''));
+            $password = trim((string)($data[1] ?? ''));
+            $paketCsvRaw = trim((string)($data[2] ?? ''));
+
+            if ($username === '' || $password === '' || $paketCsvRaw === '') {
+                $skipped++;
+                continue;
             }
+
+            $stmtDupUnion->bind_param("ss", $username, $username);
+            $stmtDupUnion->execute();
+            $resDup = $stmtDupUnion->get_result();
+            if ($resDup && $resDup->fetch_assoc()) {
+                $skipped++;
+                continue;
+            }
+
+            $paketNormalized = normalizeProfileName($paketCsvRaw);
+            $stmtCheckPaket->bind_param("s", $paketNormalized);
+            $stmtCheckPaket->execute();
+            $resPaketCsv = $stmtCheckPaket->get_result();
+            $paketRow = $resPaketCsv ? $resPaketCsv->fetch_assoc() : null;
+
+            if (!$paketRow) {
+                $skipped++;
+                continue;
+            }
+
+            $hargaCsv = (int)$paketRow['harga'];
+            $stmtInsertVoucher->bind_param("sssis", $username, $password, $paketCsvRaw, $hargaCsv, $statusBaru);
+            if (!$stmtInsertVoucher->execute()) {
+                throw new RuntimeException("Execute failed (insert voucher import): " . $stmtInsertVoucher->error);
+            }
+            $inserted++;
         }
 
         fclose($handle);
-        $msg = "Import CSV selesai";
-    } else {
-        $msg = "Upload gagal";
+        $stmtDupUnion->close();
+        $stmtCheckPaket->close();
+        $stmtInsertVoucher->close();
+
+        $msg = "Import CSV selesai. Inserted: {$inserted}, Skipped: {$skipped}";
+    } catch (Throwable $e) {
+        $msg = "Import gagal: " . $e->getMessage();
     }
 }
 
@@ -256,10 +436,34 @@ if (isset($_POST['delete_selected'])) {
 ======================= */
 $defaultPaket = $profiles[0] ?? '4 jam';
 $paket = $_POST['paket'] ?? $defaultPaket;
-$q = $conn->query("SELECT * FROM paket WHERE durasi='$paket'");
-$data = $q ? $q->fetch_assoc() : null;
-$harga = $data['harga'] ?? 5000;
-$vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
+$data = null;
+$stmtPaket = $conn->prepare("SELECT * FROM paket WHERE durasi = ? LIMIT 1");
+if (!$stmtPaket) {
+    throw new RuntimeException("Prepare failed (paket detail): " . $conn->error);
+}
+$stmtPaket->bind_param("s", $paket);
+$stmtPaket->execute();
+$resPaket = $stmtPaket->get_result();
+$data = $resPaket ? $resPaket->fetch_assoc() : null;
+$stmtPaket->close();
+$harga = $data['harga'] ?? null;
+
+$limit = 100;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) {
+    $page = 1;
+}
+$offset = ($page - 1) * $limit;
+
+$stmtVouchers = $conn->prepare("SELECT * FROM voucher ORDER BY id DESC LIMIT ? OFFSET ?");
+if (!$stmtVouchers) {
+    throw new RuntimeException("Prepare failed (list voucher): " . $conn->error);
+}
+$stmtVouchers->bind_param("ii", $limit, $offset);
+$stmtVouchers->execute();
+$resVouchers = $stmtVouchers->get_result();
+$vouchers = $resVouchers ? $resVouchers->fetch_all(MYSQLI_ASSOC) : [];
+$stmtVouchers->close();
 ?>
 
 <!DOCTYPE html>
@@ -333,7 +537,10 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYS
 
             <form method="POST" onsubmit="return confirm('Yakin ingin menghapus voucher yang dipilih? Data terkait juga akan dihapus (kecuali log).');">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div></div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="toggle-password">
+                        <label class="form-check-label" for="toggle-password">Tampilkan Password</label>
+                    </div>
                     <button type="submit" name="delete_selected" class="btn btn-danger btn-sm">
                         Hapus Terpilih
                     </button>
@@ -356,8 +563,8 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYS
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $no = count($vouchers); ?>
-                            <?php foreach (array_reverse($vouchers) as $v): ?>
+                            <?php $no = $offset + 1; ?>
+                            <?php foreach ($vouchers as $v): ?>
                                 <tr>
                                     <td>
                                         <input
@@ -366,9 +573,17 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYS
                                             name="selected_vouchers[]"
                                             value="<?= htmlspecialchars($v['username']) ?>">
                                     </td>
-                                    <td><?= $no-- ?></td>
+                                    <td><?= $no++ ?></td>
                                     <td><?= htmlspecialchars($v['username']) ?></td>
-                                    <td><code><?= htmlspecialchars($v['password']) ?></code></td>
+                                    <td>
+                                        <?php $plainPassword = (string)($v['password'] ?? ''); ?>
+                                        <code
+                                            class="password-cell"
+                                            data-masked="<?= htmlspecialchars(str_repeat('*', max(6, strlen($plainPassword)))) ?>"
+                                            data-plain="<?= htmlspecialchars($plainPassword) ?>">
+                                            <?= htmlspecialchars(str_repeat('*', max(6, strlen($plainPassword)))) ?>
+                                        </code>
+                                    </td>
                                     <td><?= htmlspecialchars($v['paket']) ?></td>
                                     <td>Rp <?= number_format($v['harga']) ?></td>
                                     <td><?= htmlspecialchars($v['status'] ?? '-') ?></td>
@@ -404,6 +619,18 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYS
                 }
             });
         });
+
+        const togglePassword = document.getElementById('toggle-password');
+        const passwordCells = document.querySelectorAll('.password-cell');
+
+        if (togglePassword) {
+            togglePassword.addEventListener('change', function() {
+                const showPlain = togglePassword.checked;
+                passwordCells.forEach(el => {
+                    el.textContent = showPlain ? el.dataset.plain : el.dataset.masked;
+                });
+            });
+        }
     </script>
 </body>
 

@@ -13,41 +13,17 @@ if (file_exists($logfile)) {
 
 function indoDate($date)
 {
-    $bulan = [
-        "Jan" => "Januari",
-        "Feb" => "Februari",
-        "Mar" => "Maret",
-        "Apr" => "April",
-        "May" => "Mei",
-        "Jun" => "Juni",
-        "Jul" => "Juli",
-        "Aug" => "Agustus",
-        "Sep" => "September",
-        "Oct" => "Oktober",
-        "Nov" => "November",
-        "Dec" => "Desember"
-    ];
+    if (empty($date)) {
+        return "-";
+    }
 
-    $hari = [
-        "Sun" => "Minggu",
-        "Mon" => "Senin",
-        "Tue" => "Selasa",
-        "Wed" => "Rabu",
-        "Thu" => "Kamis",
-        "Fri" => "Jumat",
-        "Sat" => "Sabtu"
-    ];
+    $timestamp = strtotime($date);
 
-    $pecah = explode(" ", $date);
+    if ($timestamp === false) {
+        return "-";
+    }
 
-    // contoh: Wed Mar 30 01:40:41 2026
-    $h = $hari[$pecah[0]] ?? $pecah[0];
-    $b = $bulan[$pecah[1]] ?? $pecah[1];
-    $tgl = $pecah[2];
-    $jam = substr($pecah[3], 0, 5);
-    $thn = $pecah[4];
-
-    return "$h, $tgl $b $thn $jam";
+    return date("d M Y H:i:s", $timestamp);
 }
 ?>
 

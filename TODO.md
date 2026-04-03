@@ -1,7 +1,9 @@
-# TODO - Improve UI Tab Pelanggan
+- [x] Refactor fungsi `indoDate()` di `log.php` agar pakai format `date("d M Y H:i:s", strtotime($waktu))`
+- [x] Tambahkan fallback `"-"` jika waktu NULL/kosong/invalid
+- [x] Validasi konsistensi output format waktu di semua row
 
-- [x] Update `users.php` layout for professional tab/search header wrapper
-- [x] Add smooth submenu/tab transitions and professional styling in `assets/style.css`
-- [x] Add subtle content animation for table area when switching filter
-- [x] Add responsive adjustments for mobile/tablet layout
-- [x] Final review for compatibility with existing filter/search behavior
+- [ ] Tambah fitur show/hide password di `users.php` seperti `voucher.php`
+  - [x] Ubah cell password jadi elemen `.password-cell` dengan `data-masked` dan `data-plain`
+  - [x] Tambah switch `#toggle-password` di area atas tabel pelanggan
+  - [x] Tambah JavaScript toggle untuk menampilkan password asli / bintang
+  - [ ] Verifikasi struktur halaman tetap rapi

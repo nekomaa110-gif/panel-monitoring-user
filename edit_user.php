@@ -15,17 +15,22 @@ $expiration = "";
 /* AMBIL DATA USER */
 if ($user != "") {
 
-    $q = $conn->query("
+    $stmt = $conn->prepare("
     SELECT
+    username,
     MAX(CASE WHEN attribute='Cleartext-Password' THEN value END) as password,
     MAX(CASE WHEN attribute='Expiration' THEN value END) as expiration
     FROM radcheck
-    WHERE BINARY username='$user'
+    WHERE LOWER(username)=LOWER(?)
+    AND attribute IN ('Cleartext-Password','Expiration')
+    LIMIT 1
     ");
+    $stmt->bind_param("s", $user);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $data = $result->fetch_assoc();
 
-    $data = $q->fetch_assoc();
-
-    if ($data['password'] === null && $data['expiration'] === null) {
+    if (!$data || ($data['password'] === null && $data['expiration'] === null)) {
 
         $user = ""; // biar form ga muncul
         $_SESSION['msg'] = [
@@ -34,9 +39,12 @@ if ($user != "") {
         ];
     } else {
 
+        $user = $data['username'] ?? $user; // tetap pakai casing original dari DB
         $password = $data['password'] ?? "";
         $expiration = $data['expiration'] ?? "";
     }
+
+    $stmt->close();
 }
 
 /* SIMPAN PERUBAHAN */
