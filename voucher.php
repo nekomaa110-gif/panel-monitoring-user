@@ -171,6 +171,87 @@ if (isset($_POST['import'])) {
 }
 
 /* =======================
+   HAPUS MASSAL VOUCHER
+======================= */
+if (isset($_POST['delete_selected'])) {
+    $selectedUsernames = $_POST['selected_vouchers'] ?? [];
+
+    if (!is_array($selectedUsernames) || count($selectedUsernames) === 0) {
+        $msg = "Tidak ada voucher yang dipilih untuk dihapus";
+    } else {
+        $deletedCount = 0;
+
+        $stmtDelVoucher = $conn->prepare("DELETE FROM voucher WHERE username = ?");
+        $stmtDelRadcheck = $conn->prepare("DELETE FROM radcheck WHERE username = ?");
+        $stmtDelRadusergroup = $conn->prepare("DELETE FROM radusergroup WHERE username = ?");
+        $stmtDelRadreply = $conn->prepare("DELETE FROM radreply WHERE username = ?");
+        $stmtDelRadpostauth = $conn->prepare("DELETE FROM radpostauth WHERE username = ?");
+        $stmtDelUserbillinfo = $conn->prepare("DELETE FROM userbillinfo WHERE username = ?");
+        $stmtDelUserinfo = $conn->prepare("DELETE FROM userinfo WHERE username = ?");
+        $stmtDelRadacct = $conn->prepare("DELETE FROM radacct WHERE username = ?");
+
+        foreach ($selectedUsernames as $usernameRaw) {
+            $username = trim((string)$usernameRaw);
+            if ($username === '') {
+                continue;
+            }
+
+            if ($stmtDelVoucher) {
+                $stmtDelVoucher->bind_param("s", $username);
+                $stmtDelVoucher->execute();
+                $deletedCount += $stmtDelVoucher->affected_rows > 0 ? 1 : 0;
+            }
+
+            if ($stmtDelRadcheck) {
+                $stmtDelRadcheck->bind_param("s", $username);
+                $stmtDelRadcheck->execute();
+            }
+
+            if ($stmtDelRadusergroup) {
+                $stmtDelRadusergroup->bind_param("s", $username);
+                $stmtDelRadusergroup->execute();
+            }
+
+            if ($stmtDelRadreply) {
+                $stmtDelRadreply->bind_param("s", $username);
+                $stmtDelRadreply->execute();
+            }
+
+            if ($stmtDelRadpostauth) {
+                $stmtDelRadpostauth->bind_param("s", $username);
+                $stmtDelRadpostauth->execute();
+            }
+
+            if ($stmtDelUserbillinfo) {
+                $stmtDelUserbillinfo->bind_param("s", $username);
+                $stmtDelUserbillinfo->execute();
+            }
+
+            if ($stmtDelUserinfo) {
+                $stmtDelUserinfo->bind_param("s", $username);
+                $stmtDelUserinfo->execute();
+            }
+
+            if ($stmtDelRadacct) {
+                $stmtDelRadacct->bind_param("s", $username);
+                $stmtDelRadacct->execute();
+            }
+        }
+
+        if ($stmtDelVoucher) $stmtDelVoucher->close();
+        if ($stmtDelRadcheck) $stmtDelRadcheck->close();
+        if ($stmtDelRadusergroup) $stmtDelRadusergroup->close();
+        if ($stmtDelRadreply) $stmtDelRadreply->close();
+        if ($stmtDelRadpostauth) $stmtDelRadpostauth->close();
+        if ($stmtDelUserbillinfo) $stmtDelUserbillinfo->close();
+        if ($stmtDelUserinfo) $stmtDelUserinfo->close();
+        if ($stmtDelRadacct) $stmtDelRadacct->close();
+
+        $msg = $deletedCount . " voucher berhasil dihapus (beserta data terkait selain log)";
+    }
+}
+
+/* =======================
    AMBIL DATA
 ======================= */
 $defaultPaket = $profiles[0] ?? '4 jam';
@@ -250,39 +331,80 @@ $vouchers = $conn->query("SELECT * FROM voucher ORDER BY id ASC")->fetch_all(MYS
                 <h5>Data Voucher</h5>
             </div>
 
-            <div class="table-scroll">
-                <table class="table table-striped table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Username</th>
-                            <th>Password</th>
-                            <th>Paket</th>
-                            <th>Harga</th>
-                            <th>Status</th>
-                            <th>Dibuat</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $no = count($vouchers); ?>
-                        <?php foreach (array_reverse($vouchers) as $v): ?>
+            <form method="POST" onsubmit="return confirm('Yakin ingin menghapus voucher yang dipilih? Data terkait juga akan dihapus (kecuali log).');">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div></div>
+                    <button type="submit" name="delete_selected" class="btn btn-danger btn-sm">
+                        Hapus Terpilih
+                    </button>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
                             <tr>
-                                <td><?= $no-- ?></td>
-                                <td><?= htmlspecialchars($v['username']) ?></td>
-                                <td><code><?= htmlspecialchars($v['password']) ?></code></td>
-                                <td><?= htmlspecialchars($v['paket']) ?></td>
-                                <td>Rp <?= number_format($v['harga']) ?></td>
-                                <td><?= htmlspecialchars($v['status'] ?? '-') ?></td>
-                                <td><?= date('d/m H:i', strtotime($v['created_at'])) ?></td>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="select-all">
+                                </th>
+                                <th>No</th>
+                                <th>Username</th>
+                                <th>Password</th>
+                                <th>Paket</th>
+                                <th>Harga</th>
+                                <th>Status</th>
+                                <th>Dibuat</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            <?php $no = count($vouchers); ?>
+                            <?php foreach (array_reverse($vouchers) as $v): ?>
+                                <tr>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            class="voucher-checkbox"
+                                            name="selected_vouchers[]"
+                                            value="<?= htmlspecialchars($v['username']) ?>">
+                                    </td>
+                                    <td><?= $no-- ?></td>
+                                    <td><?= htmlspecialchars($v['username']) ?></td>
+                                    <td><code><?= htmlspecialchars($v['password']) ?></code></td>
+                                    <td><?= htmlspecialchars($v['paket']) ?></td>
+                                    <td>Rp <?= number_format($v['harga']) ?></td>
+                                    <td><?= htmlspecialchars($v['status'] ?? '-') ?></td>
+                                    <td><?= date('d/m H:i', strtotime($v['created_at'])) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const selectAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.voucher-checkbox');
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                checkboxes.forEach(cb => {
+                    cb.checked = selectAll.checked;
+                });
+            });
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const total = checkboxes.length;
+                const checked = document.querySelectorAll('.voucher-checkbox:checked').length;
+                if (selectAll) {
+                    selectAll.checked = total > 0 && checked === total;
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
