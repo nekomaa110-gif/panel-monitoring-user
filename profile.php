@@ -4,6 +4,10 @@ require "config/db.php";
 
 $msg = "";
 
+if (isset($_GET['updated']) && $_GET['updated'] == '1') {
+    $msg = "Profile berhasil diupdate";
+}
+
 /* TAMBAH PROFIL + ATRIBUT */
 if (isset($_POST['add'])) {
 
@@ -152,6 +156,10 @@ ORDER BY groupname
                                         <td><?php echo $no++; ?></td>
                                         <td><?php echo $row['groupname']; ?></td>
                                         <td>
+                                            <a href="edit_profile.php?name=<?php echo urlencode($row['groupname']); ?>"
+                                                class="btn btn-warning btn-sm mb-1">
+                                                Edit
+                                            </a>
                                             <a href="?hapus=<?php echo $row['groupname']; ?>"
                                                 class="btn btn-danger btn-sm"
                                                 onclick="return confirm('Yakin hapus?')">

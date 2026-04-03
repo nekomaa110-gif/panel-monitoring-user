@@ -169,7 +169,7 @@ $q = $stmtUsers->get_result();
             </div>
         </div>
 
-        <div class="d-flex justify-content-end align-items-center mb-2">
+        <div class="d-flex justify-content-start align-items-center mb-2">
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="toggle-password">
                 <label class="form-check-label" for="toggle-password">Tampilkan Password</label>

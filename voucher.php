@@ -5,82 +5,32 @@ require "config/db.php";
 /* =======================
    HELPERS
 ======================= */
-function normalizeProfileName(string $name): string
+function allowedPaketList(): array
 {
-    $n = strtolower(trim($name));
-    $n = str_replace([' ', '-', '_'], '', $n);
+    return ['4 jam', '5 jam', 'Mingguan'];
+}
 
-    if ($n === '5jam') {
-        return '5jam';
-    }
-
-    if ($n === '4jam') {
-        return '4jam';
-    }
-
-    if ($n === '7hari' || $n === 'mingguan') {
-        return 'mingguan';
-    }
-
-    return $n;
+function getHarga(string $paket): ?int
+{
+    return match ($paket) {
+        '4 jam' => 5000,
+        '5 jam' => 5000,
+        'Mingguan' => 55000,
+        default => null
+    };
 }
 
 function sessionTimeoutByPaket(string $paket): int
 {
-    $n = normalizeProfileName($paket);
-
-    if ($n === 'mingguan' || strpos($n, '7hari') !== false) {
-        return 7 * 24 * 3600;
-    }
-
-    if (strpos($n, '5jam') !== false || preg_match('/(^|[^0-9])5([^0-9]|$)/', $paket)) {
-        return 5 * 3600;
-    }
-
-    return 4 * 3600;
+    return match ($paket) {
+        'Mingguan' => 7 * 24 * 3600,
+        '5 jam' => 5 * 3600,
+        default => 4 * 3600
+    };
 }
 
-function hargaByPaket(mysqli $conn, string $paket): ?int
-{
-    $n = normalizeProfileName($paket);
-
-    $stmt = $conn->prepare("SELECT harga FROM paket WHERE LOWER(REPLACE(REPLACE(REPLACE(durasi,' ',''),'-',''),'_','')) = ? LIMIT 1");
-    if (!$stmt) {
-        throw new RuntimeException("Prepare failed (hargaByPaket): " . $conn->error);
-    }
-
-    $stmt->bind_param("s", $n);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $harga = null;
-
-    if ($res && ($row = $res->fetch_assoc())) {
-        $harga = (int)$row['harga'];
-    }
-
-    $stmt->close();
-    return $harga;
-}
-
-/* =======================
-   AMBIL SEMUA PROFIL
-======================= */
-$profiles = [];
-$resProfiles = $conn->query("
-    SELECT DISTINCT groupname
-    FROM (
-        SELECT groupname FROM radgroupcheck
-        UNION
-        SELECT groupname FROM radgroupreply
-    ) g
-    WHERE groupname IS NOT NULL AND groupname <> ''
-    ORDER BY groupname
-");
-if ($resProfiles) {
-    while ($row = $resProfiles->fetch_assoc()) {
-        $profiles[] = $row['groupname'];
-    }
-}
+$allowedPaket = allowedPaketList();
+$profiles = $allowedPaket;
 
 /* =======================
    GENERATE VOUCHER
@@ -94,29 +44,13 @@ if (isset($_POST['generate'])) {
             throw new RuntimeException("Jumlah generate harus antara 1 sampai 500.");
         }
 
-        $groupname = null;
-        $normalizedInput = normalizeProfileName($paket);
-
-        foreach ($profiles as $p) {
-            if (normalizeProfileName($p) === $normalizedInput) {
-                $groupname = $p;
-                break;
-            }
+        if (!in_array($paket, $allowedPaket, true)) {
+            throw new RuntimeException("Paket tidak valid.");
         }
 
-        if (empty($groupname) && in_array($paket, $profiles, true)) {
-            $groupname = $paket;
-        }
-
-        if (empty($groupname)) {
-            throw new RuntimeException("Paket tidak valid / tidak terdaftar pada profile.");
-        }
-
-        $paket = $groupname;
-
-        $hargaVoucher = hargaByPaket($conn, $paket);
+        $hargaVoucher = getHarga($paket);
         if ($hargaVoucher === null) {
-            throw new RuntimeException("Harga paket tidak ditemukan di tabel paket.");
+            throw new RuntimeException("Harga paket tidak ditemukan.");
         }
 
         $stmtDupUnion = $conn->prepare("
@@ -224,7 +158,7 @@ if (isset($_POST['generate'])) {
                 throw new RuntimeException("Execute failed (del group): " . $stmtDelGroup->error);
             }
 
-            $stmtAssign->bind_param("ss", $user, $groupname);
+            $stmtAssign->bind_param("ss", $user, $paket);
             if (!$stmtAssign->execute()) {
                 throw new RuntimeException("Execute failed (assign group): " . $stmtAssign->error);
             }
@@ -243,11 +177,8 @@ if (isset($_POST['generate'])) {
         $stmtDelGroup->close();
         $stmtAssign->close();
 
-        $msg = "Voucher berhasil dibuat dan tersinkron ke profile '$groupname'";
+        $msg = "Voucher berhasil dibuat untuk paket '$paket'";
     } catch (Throwable $e) {
-        if ($conn->errno === 0) {
-            // no-op for connection-level check
-        }
         if ($conn->ping()) {
             @$conn->rollback();
         }
@@ -292,9 +223,6 @@ if (isset($_POST['import'])) {
         ");
         if (!$stmtDupUnion) throw new RuntimeException("Prepare failed (dup union import): " . $conn->error);
 
-        $stmtCheckPaket = $conn->prepare("SELECT harga FROM paket WHERE LOWER(REPLACE(REPLACE(REPLACE(durasi,' ',''),'-',''),'_','')) = ? LIMIT 1");
-        if (!$stmtCheckPaket) throw new RuntimeException("Prepare failed (check paket): " . $conn->error);
-
         $stmtInsertVoucher = $conn->prepare("INSERT INTO voucher (username,password,paket,harga,status) VALUES (?,?,?,?,?)");
         if (!$stmtInsertVoucher) throw new RuntimeException("Prepare failed (insert voucher): " . $conn->error);
 
@@ -312,6 +240,17 @@ if (isset($_POST['import'])) {
                 continue;
             }
 
+            if (!in_array($paketCsvRaw, $allowedPaket, true)) {
+                $skipped++;
+                continue;
+            }
+
+            $hargaCsv = getHarga($paketCsvRaw);
+            if ($hargaCsv === null) {
+                $skipped++;
+                continue;
+            }
+
             $stmtDupUnion->bind_param("ss", $username, $username);
             $stmtDupUnion->execute();
             $resDup = $stmtDupUnion->get_result();
@@ -320,18 +259,6 @@ if (isset($_POST['import'])) {
                 continue;
             }
 
-            $paketNormalized = normalizeProfileName($paketCsvRaw);
-            $stmtCheckPaket->bind_param("s", $paketNormalized);
-            $stmtCheckPaket->execute();
-            $resPaketCsv = $stmtCheckPaket->get_result();
-            $paketRow = $resPaketCsv ? $resPaketCsv->fetch_assoc() : null;
-
-            if (!$paketRow) {
-                $skipped++;
-                continue;
-            }
-
-            $hargaCsv = (int)$paketRow['harga'];
             $stmtInsertVoucher->bind_param("sssis", $username, $password, $paketCsvRaw, $hargaCsv, $statusBaru);
             if (!$stmtInsertVoucher->execute()) {
                 throw new RuntimeException("Execute failed (insert voucher import): " . $stmtInsertVoucher->error);
@@ -341,7 +268,6 @@ if (isset($_POST['import'])) {
 
         fclose($handle);
         $stmtDupUnion->close();
-        $stmtCheckPaket->close();
         $stmtInsertVoucher->close();
 
         $msg = "Import CSV selesai. Inserted: {$inserted}, Skipped: {$skipped}";
@@ -435,18 +361,10 @@ if (isset($_POST['delete_selected'])) {
    AMBIL DATA
 ======================= */
 $defaultPaket = $profiles[0] ?? '4 jam';
-$paket = $_POST['paket'] ?? $defaultPaket;
-$data = null;
-$stmtPaket = $conn->prepare("SELECT * FROM paket WHERE durasi = ? LIMIT 1");
-if (!$stmtPaket) {
-    throw new RuntimeException("Prepare failed (paket detail): " . $conn->error);
+$paket = (string)($_POST['paket'] ?? $defaultPaket);
+if (!in_array($paket, $allowedPaket, true)) {
+    $paket = $defaultPaket;
 }
-$stmtPaket->bind_param("s", $paket);
-$stmtPaket->execute();
-$resPaket = $stmtPaket->get_result();
-$data = $resPaket ? $resPaket->fetch_assoc() : null;
-$stmtPaket->close();
-$harga = $data['harga'] ?? null;
 
 $limit = 100;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -494,16 +412,11 @@ $stmtVouchers->close();
                     <div class="col-md-4">
                         <label class="form-label">Paket</label>
                         <select name="paket" class="form-select">
-                            <?php if (!empty($profiles)): ?>
-                                <?php foreach ($profiles as $profileName): ?>
-                                    <option value="<?= htmlspecialchars($profileName) ?>" <?= $paket === $profileName ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($profileName) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <option value="4 jam" <?= $paket === '4 jam' ? 'selected' : '' ?>>4 jam</option>
-                                <option value="5 jam" <?= $paket === '5 jam' ? 'selected' : '' ?>>5 jam</option>
-                            <?php endif; ?>
+                            <?php foreach ($profiles as $profileName): ?>
+                                <option value="<?= htmlspecialchars($profileName) ?>" <?= $paket === $profileName ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($profileName) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="col-md-4">
