@@ -2,17 +2,17 @@
 
 ## Progress Tracker
 
-- [ ] 1. Fix `.htaccess` — regex `+`, tambah rule `actions/`
-- [ ] 2. Fix `pages/login.php` — hapus $extraCss/$extraJs, fix redirects
-- [ ] 3. Fix `pages/profile.php` — fix JS redirect
-- [ ] 4. Fix `pages/edit_profile.php` — fix redirect
-- [ ] 5. Fix `pages/edit_user.php` — fix redirect
-- [ ] 6. Fix `pages/voucher.php` — hapus $extraJs
-- [ ] 7. Fix `core/auth.php` — fix redirect absolute
-- [ ] 8. Fix `logout.php` — fix redirect absolute
-- [ ] 9. Fix `views/layout/sidebar.php` — semua href tanpa .php
-- [ ] 10. Fix `views/layout/navbar.php` — logout.php → logout
-- [ ] 11. Fix `views/login.view.php` — tambah $extraCss & $extraJs
+- [x] 1. Fix `.htaccess` — regex `+`, tambah rule `actions/`
+- [x] 2. Fix `pages/login.php` — hapus $extraCss/$extraJs, fix redirects
+- [x] 3. Fix `pages/profile.php` — fix JS redirect → PHP redirect + query param
+- [x] 4. Fix `pages/edit_profile.php` — fix redirect
+- [x] 5. Fix `pages/edit_user.php` — fix redirect
+- [x] 6. Fix `pages/voucher.php` — hapus $extraJs
+- [x] 7. Fix `core/auth.php` — fix redirect absolute `/zeronet/login`
+- [x] 8. Fix `logout.php` — fix redirect absolute `/zeronet/login`
+- [x] 9. Fix `views/layout/sidebar.php` — semua href tanpa .php, fix missing `$`
+- [x] 10. Fix `views/layout/navbar.php` — logout.php → logout
+- [x] 11. Fix `views/login.view.php` — tambah $extraCss & $extraJs
 - [ ] 12. Fix `views/index.view.php` — fix links, hapus stray </nav>
 - [ ] 13. Fix `views/users.view.php` — fix semua links
 - [ ] 14. Fix `views/profile.view.php` — fix edit_profile link
