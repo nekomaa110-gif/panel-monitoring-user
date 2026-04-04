@@ -1,5 +1,5 @@
 <?php
-require "../auth.php";
+require "../core/auth.php";
 require "../config/db.php";
 
 $user = trim($_GET['user'] ?? '');

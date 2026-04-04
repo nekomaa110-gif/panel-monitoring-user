@@ -1,5 +1,5 @@
 <?php
-require "config/db.php";
+require __DIR__ . "/config/db.php";
 
 $q = $conn->query("
 SELECT username, value 
