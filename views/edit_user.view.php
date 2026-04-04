@@ -4,10 +4,6 @@
 
 <?php include __DIR__ . "/layout/navbar.php"; ?>
 
-<b>Edit User</b>
-
-</nav>
-
 <div class="content p-4">
 
     <!-- NOTIF BERSIH -->

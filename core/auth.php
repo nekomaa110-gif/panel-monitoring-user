@@ -19,7 +19,7 @@ if (!isset($_SESSION['initiated'])) {
 if (empty($_SESSION['login']) || empty($_SESSION['username'])) {
     session_unset();
     session_destroy();
-    header("Location: login.php");
+    header("Location: /zeronet/login");
     exit;
 }
 ?>

@@ -9,6 +9,11 @@ if (isset($_GET['updated']) && $_GET['updated'] == '1') {
     $msg = "Profile berhasil diupdate";
 }
 
+/* NOTIF HAPUS */
+if (isset($_GET['deleted']) && $_GET['deleted'] == '1') {
+    $msg = "Profil berhasil dihapus";
+}
+
 /* TAMBAH PROFIL + ATRIBUT */
 if (isset($_POST['add'])) {
 
@@ -75,7 +80,8 @@ if (isset($_GET['hapus']) && $_GET['hapus'] != "") {
     $conn->query("DELETE FROM radgroupreply WHERE groupname='$p'");
     $conn->query("DELETE FROM radusergroup WHERE groupname='$p'");
 
-    echo "<script>alert('Profil dihapus'); location.href='profile.php';</script>";
+    header("Location: profile?deleted=1");
+    exit;
 }
 
 /* AMBIL SEMUA PROFIL */

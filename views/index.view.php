@@ -6,17 +6,13 @@
 <!-- NAVBAR -->
 <?php include __DIR__ . "/layout/navbar.php"; ?>
 
-<b>Dashboard</b>
-
-</nav>
-
 <!-- CONTENT -->
 
 <div class="content">
 
     <div class="row g-4 text-center">
 
-        <a href="users.php" class="col-md-3 text-decoration-none">
+        <a href="users" class="col-md-3 text-decoration-none">
 
             <div class="card dashboard-card">
 
@@ -32,7 +28,7 @@
 
         </a>
 
-        <a href="users.php?filter=online" class="col-md-3 text-decoration-none">
+        <a href="users?filter=online" class="col-md-3 text-decoration-none">
 
             <div class="card dashboard-card">
 
@@ -48,7 +44,7 @@
 
         </a>
 
-        <a href="users.php?filter=expired" class="col-md-3 text-decoration-none">
+        <a href="users?filter=expired" class="col-md-3 text-decoration-none">
 
             <div class="card dashboard-card">
 
@@ -64,7 +60,7 @@
 
         </a>
 
-        <a href="users.php?filter=disabled" class="col-md-3 text-decoration-none">
+        <a href="users?filter=disabled" class="col-md-3 text-decoration-none">
 
             <div class="card dashboard-card">
 

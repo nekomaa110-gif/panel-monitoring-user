@@ -4,10 +4,6 @@
 
 <?php include __DIR__ . "/layout/navbar.php"; ?>
 
-<b>Log</b>
-
-</nav>
-
 <div class="content">
 
     <div class="d-flex justify-content-between align-items-center mb-4">

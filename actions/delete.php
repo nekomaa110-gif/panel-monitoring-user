@@ -7,7 +7,7 @@ $search = $_GET['search'] ?? "";
 $filter = $_GET['filter'] ?? "";
 
 if ($user === '') {
-    header("Location: ../users.php?search=" . urlencode($search) . "&filter=" . urlencode($filter));
+    header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));
     exit;
 }
 
@@ -33,5 +33,5 @@ foreach ($queries as $sql) {
     $stmt->close();
 }
 
-header("Location: ../users.php?search=" . urlencode($search) . "&filter=" . urlencode($filter));
+header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));
 exit;

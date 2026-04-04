@@ -82,5 +82,5 @@ $stmtClearMeta->bind_param("s", $user);
 $stmtClearMeta->execute();
 
 /* kembali ke halaman sebelumnya */
-header("Location: ../users.php?search=" . urlencode($search) . "&filter=" . urlencode($filter));
+header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));
 exit;

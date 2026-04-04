@@ -1,87 +1,27 @@
-# Refactor TODO - PHP RADIUS Panel
+# Refactor TODO - Clean URL & MVC Structure
 
-## Phase 1: profile.php ✅ DONE
+## Progress Tracker
 
-- [x] Create core/auth.php
-- [x] Create views/layout/header.php
-- [x] Create views/layout/footer.php
-- [x] Create views/layout/sidebar.php
-- [x] Create views/layout/navbar.php
-- [x] Create pages/profile.php (logic only)
-- [x] Create views/profile.view.php (HTML only)
-- [x] Update root profile.php → thin entry point
-
-## Phase 2: edit_profile.php ✅ DONE
-
-- [x] Create core/helpers.php (parseDuration, parseExpiration, parseRate, valuePlaceholder, indoDate)
-- [x] Create pages/edit_profile.php (logic only)
-- [x] Create views/edit_profile.view.php (HTML only)
-- [x] Update root edit_profile.php → thin entry point
-
-## Phase 3: remaining pages ✅ ALL DONE
-
-- [x] users.php — pages/users.php + views/users.view.php
-- [x] index.php — pages/index.php + views/index.view.php
-- [x] adduser.php — pages/adduser.php + views/adduser.view.php
-- [x] edit_user.php — pages/edit_user.php + views/edit_user.view.php
-- [x] log.php — pages/log.php + views/log.view.php
-- [x] voucher.php — pages/voucher.php + views/voucher.view.php
-- [x] login.php — pages/login.php + views/login.view.php
-- [x] logout.php — no change needed (pure redirect, no HTML)
-- [x] actions/delete.php — updated require "../core/auth.php"
-- [x] actions/disable.php — updated require "../core/auth.php"
-- [x] actions/enable.php — updated require "../core/auth.php"
-- [x] cron_disable.php — updated to use **DIR** path, no view needed (CLI script)
-
-## Final Structure
-
-```
-/var/www/zeronet/
-├── config/db.php               ← DB connection (unchanged)
-├── core/
-│   ├── auth.php                ← Session guard
-│   └── helpers.php             ← parseDuration, parseExpiration, parseRate, valuePlaceholder, indoDate
-├── pages/
-│   ├── index.php               ← Dashboard logic
-│   ├── login.php               ← Login logic
-│   ├── profile.php             ← Profile CRUD logic
-│   ├── edit_profile.php        ← Edit profile attributes logic
-│   ├── users.php               ← Users list logic
-│   ├── adduser.php             ← Add user logic
-│   ├── edit_user.php           ← Edit user logic
-│   ├── log.php                 ← Log reader logic
-│   └── voucher.php             ← Voucher generate/import/delete logic
-├── views/
-│   ├── layout/
-│   │   ├── header.php          ← <head> + Bootstrap CDN
-│   │   ├── footer.php          ← $extraJs + </body></html>
-│   │   ├── sidebar.php         ← Nav links with active state
-│   │   └── navbar.php          ← Top bar with $navTitle + logout
-│   ├── index.view.php
-│   ├── login.view.php
-│   ├── profile.view.php
-│   ├── edit_profile.view.php
-│   ├── users.view.php
-│   ├── adduser.view.php
-│   ├── edit_user.view.php
-│   ├── log.view.php
-│   └── voucher.view.php
-├── actions/
-│   ├── delete.php              ← require "../core/auth.php"
-│   ├── disable.php             ← require "../core/auth.php"
-│   └── enable.php              ← require "../core/auth.php"
-├── assets/style.css            ← unchanged
-├── cron_disable.php            ← CLI cron, no view, uses __DIR__
-├── logout.php                  ← session_destroy + redirect (unchanged)
-│
-│   (Root entry points — each is 1 line: require __DIR__ . "/pages/X.php")
-├── index.php
-├── login.php
-├── profile.php
-├── edit_profile.php
-├── users.php
-├── adduser.php
-├── edit_user.php
-├── log.php
-└── voucher.php
-```
+- [ ] 1. Fix `.htaccess` — regex `+`, tambah rule `actions/`
+- [ ] 2. Fix `pages/login.php` — hapus $extraCss/$extraJs, fix redirects
+- [ ] 3. Fix `pages/profile.php` — fix JS redirect
+- [ ] 4. Fix `pages/edit_profile.php` — fix redirect
+- [ ] 5. Fix `pages/edit_user.php` — fix redirect
+- [ ] 6. Fix `pages/voucher.php` — hapus $extraJs
+- [ ] 7. Fix `core/auth.php` — fix redirect absolute
+- [ ] 8. Fix `logout.php` — fix redirect absolute
+- [ ] 9. Fix `views/layout/sidebar.php` — semua href tanpa .php
+- [ ] 10. Fix `views/layout/navbar.php` — logout.php → logout
+- [ ] 11. Fix `views/login.view.php` — tambah $extraCss & $extraJs
+- [ ] 12. Fix `views/index.view.php` — fix links, hapus stray </nav>
+- [ ] 13. Fix `views/users.view.php` — fix semua links
+- [ ] 14. Fix `views/profile.view.php` — fix edit_profile link
+- [ ] 15. Fix `views/edit_profile.view.php` — fix profile link
+- [ ] 16. Fix `views/edit_user.view.php` — hapus stray </nav>
+- [ ] 17. Fix `views/adduser.view.php` — hapus stray </nav>
+- [ ] 18. Fix `views/log.view.php` — hapus stray </nav>
+- [ ] 19. Fix `views/voucher.view.php` — tambah $extraJs
+- [ ] 20. Fix `actions/delete.php` — fix redirect
+- [ ] 21. Fix `actions/enable.php` — fix redirect
+- [ ] 22. Fix `actions/disable.php` — fix redirect
+- [ ] 23. Hapus `auth.php` (root) — duplikat

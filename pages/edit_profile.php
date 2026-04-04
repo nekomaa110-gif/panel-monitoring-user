@@ -191,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
                     $stmtInsCheck->close();
                     $stmtInsReply->close();
 
-                    header("Location: profile.php?updated=1");
+                    header("Location: profile?updated=1");
                     exit;
                 } catch (Exception $e) {
                     $conn->rollback();

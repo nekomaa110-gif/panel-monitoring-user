@@ -62,7 +62,7 @@
                                 <td><?php echo $no++; ?></td>
                                 <td><?php echo htmlspecialchars($row['groupname']); ?></td>
                                 <td>
-                                    <a href="edit_profile.php?name=<?php echo urlencode($row['groupname']); ?>"
+                                    <a href="edit_profile?name=<?php echo urlencode($row['groupname']); ?>"
                                        class="btn btn-warning btn-sm mb-1">
                                         Edit
                                     </a>

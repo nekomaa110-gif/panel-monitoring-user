@@ -111,7 +111,7 @@ if (isset($_POST['save'])) {
         "text" => "User berhasil di update"
     ];
 
-    header("Location: edit_user.php?user=$user");
+    header("Location: edit_user?user=$user");
     exit;
 }
 

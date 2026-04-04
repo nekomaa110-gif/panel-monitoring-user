@@ -57,28 +57,28 @@ $extraCss = '
             <ul class="nav customer-tabs customers-submenu">
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter == "") echo "active"; ?>"
-                        href="users.php?search=<?php echo urlencode($search); ?>">
+                    href="users?search=<?php echo urlencode($search); ?>">
                         Semua
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter == "online") echo "active"; ?>"
-                        href="users.php?filter=online&search=<?php echo urlencode($search); ?>">
+                    href="users?filter=online&search=<?php echo urlencode($search); ?>">
                         Online
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter == "expired") echo "active"; ?>"
-                        href="users.php?filter=expired&search=<?php echo urlencode($search); ?>">
+                    href="users?filter=expired&search=<?php echo urlencode($search); ?>">
                         Kadaluarsa
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter == "disabled") echo "active"; ?>"
-                        href="users.php?filter=disabled&search=<?php echo urlencode($search); ?>">
+                    href="users?filter=disabled&search=<?php echo urlencode($search); ?>">
                         Dinonaktifkan
                     </a>
                 </li>
@@ -209,21 +209,21 @@ $extraCss = '
                             <?php if ($status == "NONAKTIF") { ?>
 
                                 <a
-                                    href="actions/enable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                    href="actions/enable?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                     class="btn btn-sm btn-success btn-action-uniform">
                                     Aktifkan </a>
 
                             <?php } else { ?>
 
                                 <a
-                                    href="actions/disable.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                    href="actions/disable?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                     class="btn btn-sm btn-danger btn-action-uniform">
                                     Nonaktifkan </a>
 
                             <?php } ?>
 
                             <a
-                                href="actions/delete.php?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
+                                href="actions/delete?user=<?php echo $r['username']; ?>&search=<?php echo $search; ?>&filter=<?php echo $filter; ?>"
                                 onclick="return confirm('Yakin hapus user ini?')"
                                 class="btn btn-sm btn-dark">
                                 Hapus </a>

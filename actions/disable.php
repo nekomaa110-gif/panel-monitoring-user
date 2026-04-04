@@ -56,5 +56,5 @@ $stmtDisable = $conn->prepare("
 $stmtDisable->bind_param("s", $user);
 $stmtDisable->execute();
 
-header("Location: ../users.php?search=" . urlencode($search) . "&filter=" . urlencode($filter));
+header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));
 exit;

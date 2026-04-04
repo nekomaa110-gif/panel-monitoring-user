@@ -59,10 +59,10 @@
 
                     <button type="button" class="btn btn-outline-primary" id="btnAddRow">Tambah Baris</button>
                     <button type="submit" class="btn btn-primary">SIMPAN</button>
-                    <a href="profile.php" class="btn btn-secondary">Kembali</a>
+                    <a href="profile" class="btn btn-secondary">Kembali</a>
                 </form>
             <?php } else { ?>
-                <a href="profile.php" class="btn btn-secondary">Kembali</a>
+                <a href="profile" class="btn btn-secondary">Kembali</a>
             <?php } ?>
         </div>
     </div>

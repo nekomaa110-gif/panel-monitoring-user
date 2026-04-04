@@ -4,10 +4,6 @@
 
 <?php include __DIR__ . "/layout/navbar.php"; ?>
 
-<b>Tambah User</b>
-
-</nav>
-
 <div class="content p-4">
 
     <h3 class="mb-4">Tambah User Baru</h3>

@@ -1,22 +1,22 @@
 <?php
-$page = basename($_SERVER['PHP_SELF']);
+$page = basename($_SERVER['PHP_SELF'], '.php');
 ?>
 
 <div class="sidebar">
 
     <h4>ZERO NET</h4>
-    <a href="index.php" class="<?= $page == 'index.php' ? 'active' : '' ?>">Dashboard</a>
+    <a href="index" class="<?= $page == 'index' ? 'active' : '' ?>">Dashboard</a>
 
-    <a href="users.php" class="<?= $page == 'users.php' ? 'active' : '' ?>">Pelanggan</a>
+    <a href="users" class="<?= $page == 'users' ? 'active' : '' ?>">Pelanggan</a>
 
-    <a href="adduser.php" class="<?= $page == 'adduser.php' ? 'active' : '' ?>">Tambah User</a>
+    <a href="adduser" class="<?= $page == 'adduser' ? 'active' : '' ?>">Tambah User</a>
 
-    <a href="profile.php" class="<?= $page == 'profile.php' ? 'active' : '' ?>">Profile</a>
+    <a href="profile" class="<?= $page == 'profile' ? 'active' : '' ?>">Profile</a>
 
-    <a href="edit_user.php" class="<?= $page == 'edit_user.php' ? 'active' : '' ?>">Edit User</a>
+    <a href="edit_user" class="<?= $page == 'edit_user' ? 'active' : '' ?>">Edit User</a>
 
-    <a href="voucher.php" class="<?= $page == 'voucher.php' ? 'active' : '' ?>">Voucher</a>
+    <a href="voucher" class="<?= $page == 'voucher' ? 'active' : '' ?>">Voucher</a>
 
-    <a href="log.php" class="<?= $page == 'log.php' ? 'active' : '' ?>">Log</a>
+    <a href="log" class="<?= $page == 'log' ? 'active' : '' ?>">Log</a>
 
 </div>
