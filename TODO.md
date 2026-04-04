@@ -1,16 +1,32 @@
-# TODO - Implement Edit Profile
+# Refactor TODO - PHP RADIUS Panel
 
-- [x] Update `profile.php`
-  - [x] Tambah alert sukses setelah redirect `updated=1`
-  - [x] Tambah tombol Edit per row dengan `urlencode(groupname)`
-  - [x] Pastikan flow tambah/hapus existing tetap berjalan
+## Phase 1: profile.php ✅ DONE
 
-- [x] Buat `edit_profile.php`
-  - [x] Validasi parameter GET `name`
-  - [x] Load atribut dari `radgroupcheck` & `radgroupreply` dengan prepared statement
-  - [x] Tampilkan form dinamis (attribute/op readonly, value editable)
-  - [x] Proses submit UPDATE per attribute menggunakan prepared statement (tanpa delete+insert)
-  - [x] Validasi profile tidak ditemukan
-  - [x] Redirect ke `profile.php?updated=1` setelah sukses
+- [x] Create core/auth.php
+- [x] Create views/layout/header.php
+- [x] Create views/layout/footer.php
+- [x] Create views/layout/sidebar.php
+- [x] Create views/layout/navbar.php
+- [x] Create pages/profile.php (logic only)
+- [x] Create views/profile.view.php (HTML only)
+- [x] Update root profile.php → thin entry point
 
-- [x] Verifikasi akhir struktur dan keamanan dasar (SQL injection)
+## Phase 2: edit_profile.php ✅ DONE
+
+- [x] Create core/helpers.php (parseDuration, parseExpiration, parseRate, valuePlaceholder)
+- [x] Create pages/edit_profile.php (logic only)
+- [x] Create views/edit_profile.view.php (HTML only)
+- [x] Update root edit_profile.php → thin entry point
+
+## Phase 3: remaining pages
+
+- [x] users.php ✅ DONE
+- [ ] index.php
+- [ ] login.php
+- [ ] adduser.php
+- [ ] edit_user.php
+- [ ] log.php
+- [ ] voucher.php
+- [ ] logout.php
+- [ ] actions/ (update paths)
+- [ ] cron_disable.php
