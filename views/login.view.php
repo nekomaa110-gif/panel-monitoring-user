@@ -1,6 +1,5 @@
 <?php
 $extraCss = <<<'CSS'
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     .login-page {
         height: 100vh;
