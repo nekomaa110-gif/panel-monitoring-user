@@ -15,7 +15,7 @@ $prevGroup = '';
 $stmtPrev = $conn->prepare("
     SELECT groupname
     FROM radusergroup
-    WHERE BINARY username=? AND groupname <> 'daloRADIUS-Disabled-Users'
+    WHERE BINARY username=? AND groupname <> 'nonaktif'
     ORDER BY priority ASC
     LIMIT 1
 ");
@@ -51,7 +51,7 @@ $stmtDelete->execute();
 /* masukkan ke group disabled */
 $stmtDisable = $conn->prepare("
     INSERT INTO radusergroup (username,groupname,priority)
-    VALUES (?, 'daloRADIUS-Disabled-Users', 0)
+    VALUES (?, 'nonaktif', 0)
 ");
 $stmtDisable->bind_param("s", $user);
 $stmtDisable->execute();

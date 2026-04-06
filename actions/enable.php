@@ -1,6 +1,6 @@
 <?php
-require "../core/auth.php";
-require "../config/db.php";
+require __DIR__ . "/../core/auth.php";
+require __DIR__ . "/../config/db.php";
 
 $user   = $_GET['user'] ?? '';
 $search = $_GET['search'] ?? '';
@@ -10,8 +10,11 @@ if ($user == "") {
     die("username kosong");
 }
 
-// cari profile lama dari metadata voucher.status
+/* =========================
+   1. AMBIL PROFILE LAMA (METADATA)
+========================= */
 $restoreGroup = '';
+
 $stmtMeta = $conn->prepare("
     SELECT status
     FROM voucher
@@ -23,55 +26,71 @@ $stmtMeta = $conn->prepare("
 $stmtMeta->bind_param("s", $user);
 $stmtMeta->execute();
 $resMeta = $stmtMeta->get_result();
+
 if ($rowMeta = $resMeta->fetch_assoc()) {
     $meta = $rowMeta['status'] ?? '';
     if (strpos($meta, 'PREV_GROUP:') === 0) {
         $restoreGroup = substr($meta, strlen('PREV_GROUP:'));
     }
 }
+$stmtMeta->close();
 
-// fallback: pilih group aktif default jika metadata tidak ada
+/* =========================
+   2. JIKA TIDAK ADA, AMBIL DARI RADUSERGROUP
+========================= */
 if (empty($restoreGroup)) {
-    $stmtFallback = $conn->prepare("
+
+    $stmtExisting = $conn->prepare("
         SELECT groupname
-        FROM (
-            SELECT DISTINCT groupname FROM radgroupcheck
-            UNION
-            SELECT DISTINCT groupname FROM radgroupreply
-        ) g
-        WHERE groupname <> 'daloRADIUS-Disabled-Users'
-        ORDER BY groupname
+        FROM radusergroup
+        WHERE BINARY username=?
+          AND groupname <> 'nonaktif'
+        ORDER BY priority ASC
         LIMIT 1
     ");
-    $stmtFallback->execute();
-    $resFallback = $stmtFallback->get_result();
-    if ($rowFallback = $resFallback->fetch_assoc()) {
-        $restoreGroup = $rowFallback['groupname'] ?? '';
+    $stmtExisting->bind_param("s", $user);
+    $stmtExisting->execute();
+    $resExisting = $stmtExisting->get_result();
+
+    if ($rowExisting = $resExisting->fetch_assoc()) {
+        $restoreGroup = $rowExisting['groupname'];
     }
+
+    $stmtExisting->close();
 }
 
-// fallback terakhir
+/* =========================
+   3. FALLBACK TERAKHIR (AMAN)
+========================= */
 if (empty($restoreGroup)) {
     $restoreGroup = 'Radius-Member';
 }
 
-/* hapus group lama */
-$stmtDelete = $conn->prepare("
+/* =========================
+   4. BERSIHKAN SEMUA GROUP USER (ANTI DUPLIKAT)
+========================= */
+$stmtDeleteAll = $conn->prepare("
     DELETE FROM radusergroup
     WHERE BINARY username=?
 ");
-$stmtDelete->bind_param("s", $user);
-$stmtDelete->execute();
+$stmtDeleteAll->bind_param("s", $user);
+$stmtDeleteAll->execute();
+$stmtDeleteAll->close();
 
-/* masukkan kembali ke profile aktif */
-$stmtEnable = $conn->prepare("
-    INSERT INTO radusergroup (username,groupname,priority)
+/* =========================
+   5. INSERT PROFILE YANG BENAR
+========================= */
+$stmtInsert = $conn->prepare("
+    INSERT INTO radusergroup (username, groupname, priority)
     VALUES (?, ?, 0)
 ");
-$stmtEnable->bind_param("ss", $user, $restoreGroup);
-$stmtEnable->execute();
+$stmtInsert->bind_param("ss", $user, $restoreGroup);
+$stmtInsert->execute();
+$stmtInsert->close();
 
-/* bersihkan metadata agar tidak stale */
+/* =========================
+   6. BERSIHKAN METADATA
+========================= */
 $stmtClearMeta = $conn->prepare("
     UPDATE voucher
     SET status=NULL
@@ -80,7 +99,10 @@ $stmtClearMeta = $conn->prepare("
 ");
 $stmtClearMeta->bind_param("s", $user);
 $stmtClearMeta->execute();
+$stmtClearMeta->close();
 
-/* kembali ke halaman sebelumnya */
+/* =========================
+   7. REDIRECT
+========================= */
 header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));
 exit;

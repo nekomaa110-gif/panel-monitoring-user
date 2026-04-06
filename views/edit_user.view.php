@@ -25,6 +25,12 @@
 
         <h3>Edit User: <?php echo $user ?></h3>
 
+        <?php if (isset($current_profile)) { ?>
+        <div class="alert alert-info mb-3">
+            <strong>Profile:</strong> <?php echo htmlspecialchars($current_profile); ?> 
+        </div>
+        <?php } ?>
+
         <form method="POST">
 
             <input type="hidden" name="user" value="<?php echo $user ?>">

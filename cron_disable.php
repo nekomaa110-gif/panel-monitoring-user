@@ -19,7 +19,7 @@ while ($r = $q->fetch_assoc()) {
         $cek = $conn->query("
         SELECT * FROM radusergroup 
         WHERE BINARY username='$user' 
-        AND groupname='daloRADIUS-Disabled-Users'
+        AND groupname='nonaktif'
         ");
 
         if ($cek->num_rows == 0) {
@@ -27,7 +27,7 @@ while ($r = $q->fetch_assoc()) {
             // update ke disabled
             $conn->query("
             UPDATE radusergroup
-            SET groupname='daloRADIUS-Disabled-Users'
+            SET groupname='nonaktif'
             WHERE BINARY username='$user'
             ");
         }

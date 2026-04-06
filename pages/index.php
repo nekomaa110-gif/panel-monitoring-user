@@ -18,7 +18,7 @@ AND STR_TO_DATE(value,'%d %b %Y %H:%i') < NOW()
 /* USER DISABLED */
 $disabled = $conn->query("
 SELECT COUNT(*) as t FROM radusergroup
-WHERE groupname='daloRADIUS-Disabled-Users'
+WHERE groupname='nonaktif'
 ")->fetch_assoc()['t'];
 
 /* USER ONLINE */

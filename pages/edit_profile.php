@@ -10,7 +10,8 @@ $attributeWhitelist = [
     'Expiration',
     'Mikrotik-Rate-Limit',
     'Mikrotik-Group',
-    'Idle-Timeout'
+    'Idle-Timeout',
+    'Auth-Type',
 ];
 
 $checkAttributes = [
@@ -18,7 +19,8 @@ $checkAttributes = [
     'Session-Timeout',
     'Max-All-Session',
     'Expiration',
-    'Idle-Timeout'
+    'Idle-Timeout',
+    'Auth-Type'
 ];
 
 $replyAttributes = [

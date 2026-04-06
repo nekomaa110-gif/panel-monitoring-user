@@ -45,6 +45,18 @@ if ($user != "") {
     }
 
     $stmt->close();
+
+    /* FETCH CURRENT PROFILE (untuk display only - tidak diubah) */
+    $current_profile = '';
+    $stmt_profile = $conn->prepare("SELECT groupname FROM radusergroup WHERE BINARY username=? LIMIT 1");
+    if ($stmt_profile) {
+        $stmt_profile->bind_param("s", $user);
+        $stmt_profile->execute();
+        $profile_result = $stmt_profile->get_result();
+        $profile_data = $profile_result->fetch_assoc();
+        $current_profile = $profile_data['groupname'] ?? 'No Profile';
+        $stmt_profile->close();
+    }
 }
 
 /* SIMPAN PERUBAHAN */

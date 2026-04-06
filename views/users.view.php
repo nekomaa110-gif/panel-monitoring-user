@@ -141,7 +141,7 @@ $extraCss = '
 
                     $status = "AKTIF";
 
-                    if ($r['profile'] == "daloRADIUS-Disabled-Users") {
+                    if ($r['profile'] == "nonaktif") {
                         $status = "NONAKTIF";
                     } elseif (!empty($exp_string) && $exp < $now) {
                         $status = "EXPIRED";
