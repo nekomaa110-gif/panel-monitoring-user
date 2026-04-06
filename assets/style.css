@@ -16,6 +16,7 @@ body {
     padding-top: 20px;
 }
 
+/*BRANDING*/
 .sidebar h4 {
     color: white;
     margin: 10px 0 20px 0;
@@ -24,7 +25,6 @@ body {
     font-weight: 800;
     letter-spacing: 1px;
     line-height: 1.2;
-    border-bottom: #64748b 3px solid;
 }
 
 .sidebar a {
