@@ -6,7 +6,7 @@
 
 <div class="content p-4">
 
-    <h3 class="mb-4">Tambah User Baru</h3>
+    <h3 class="mb-4">Tambah User active</h3>
 
     <?php if ($msg) { ?>
         <div class="alert alert-info"><?php echo $msg ?></div>

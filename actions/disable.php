@@ -26,7 +26,7 @@ if ($rowPrev = $resPrev->fetch_assoc()) {
     $prevGroup = $rowPrev['groupname'] ?? '';
 }
 
-// simpan metadata previous group ke voucher terbaru (jika user berasal dari voucher)
+// simpan metadata previous group ke voucher teractive (jika user berasal dari voucher)
 if (!empty($prevGroup)) {
     $statusMeta = "PREV_GROUP:" . $prevGroup;
     $stmtSaveMeta = $conn->prepare("
