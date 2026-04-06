@@ -104,4 +104,4 @@ Login menggunakan user panel.
 
 ## Author
 
-Zein - ZeroNet
+Zein
