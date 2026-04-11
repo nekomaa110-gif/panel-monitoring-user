@@ -181,7 +181,7 @@ $extraCss = '
 
                         <td><?php echo $r['profile']; ?></td>
 
-                        <td><?php echo !empty($r['expiration']) && strtotime($r['expiration']) !== false ? date('d M Y H:i', strtotime($r['expiration'])) : '-'; ?></td>
+                        <td><?php echo !empty($r['expiration']) && strtotime($r['expiration']) !== false ? date('d M Y H:i:s', strtotime($r['expiration'])) : '-'; ?></td>
 
                         <td>
 

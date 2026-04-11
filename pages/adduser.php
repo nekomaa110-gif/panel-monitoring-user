@@ -4,7 +4,9 @@ require __DIR__ . "/../config/db.php";
 
 $msg = "";
 
-/* AMBIL SEMUA PROFIL (CHECK + REPLY) */
+/* =======================
+   AMBIL SEMUA PROFIL
+======================= */
 $profiles = $conn->query("
 SELECT DISTINCT groupname FROM (
     SELECT groupname FROM radgroupcheck
@@ -14,52 +16,84 @@ SELECT DISTINCT groupname FROM (
 ORDER BY groupname
 ");
 
+/* =======================
+   SAVE USER
+======================= */
 if (isset($_POST['save'])) {
 
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    $hari     = $_POST['hari'];
-    $profile  = $_POST['profile'];
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $hari     = (int)($_POST['hari'] ?? 0);
+    $profile  = trim($_POST['profile'] ?? '');
 
-    if ($username && $password && $profile) {
+    if ($username === '' || $password === '' || $profile === '' || $hari <= 0) {
+        $msg = "Isi semua field dengan benar!";
+    } else {
 
-        // hitung expiration
-        $expiration = date("d M Y 23:59", strtotime("+$hari days"));
+        try {
+            $conn->begin_transaction();
 
-        // CEK USER SUDAH ADA
-        $cek = $conn->query("
-        SELECT * FROM radcheck WHERE username='$username'
-        ");
-
-        if ($cek->num_rows > 0) {
-            $msg = "User sudah ada!";
-        } else {
-
-            // PASSWORD
-            $conn->query("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES ('$username','Cleartext-Password',':=','$password')
+            /* ===== CEK DUPLIKAT ===== */
+            $stmt = $conn->prepare("
+                SELECT 1 FROM radcheck WHERE username=? LIMIT 1
             ");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
 
-            // EXPIRATION
-            $conn->query("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES ('$username','Expiration',':=','$expiration')
-            ");
+            if ($stmt->get_result()->fetch_assoc()) {
+                throw new Exception("User sudah ada!");
+            }
+            $stmt->close();
 
-            // MASUKKAN KE PROFILE (GROUP)
-            $conn->query("
-            INSERT INTO radusergroup (username,groupname,priority)
-            VALUES ('$username','$profile',0)
+            /* ===== HITUNG EXPIRATION (PASTI 23:59:59) ===== */
+            $dt = new DateTime();
+            $dt->modify("+$hari days");
+            $dt->setTime(23, 59, 59);
+
+            $expiration = $dt->format('d M Y H:i:s');
+
+            /* ===== INSERT PASSWORD ===== */
+            $stmt = $conn->prepare("
+                INSERT INTO radcheck (username,attribute,op,value)
+                VALUES (?, 'Cleartext-Password', ':=', ?)
             ");
+            $stmt->bind_param("ss", $username, $password);
+            $stmt->execute();
+            $stmt->close();
+
+            /* ===== INSERT EXPIRATION ===== */
+            $stmt = $conn->prepare("
+                INSERT INTO radcheck (username,attribute,op,value)
+                VALUES (?, 'Expiration', ':=', ?)
+            ");
+            $stmt->bind_param("ss", $username, $expiration);
+            $stmt->execute();
+            $stmt->close();
+
+            /* ===== ASSIGN PROFILE ===== */
+            $stmt = $conn->prepare("
+                INSERT INTO radusergroup (username,groupname,priority)
+                VALUES (?, ?, 0)
+            ");
+            $stmt->bind_param("ss", $username, $profile);
+            $stmt->execute();
+            $stmt->close();
+
+            $conn->commit();
 
             $msg = "User berhasil dibuat";
+
+        } catch (Throwable $e) {
+
+            $conn->rollback();
+            $msg = "Error: " . $e->getMessage();
         }
-    } else {
-        $msg = "Isi semua field!";
     }
 }
 
+/* =======================
+   VIEW
+======================= */
 $pageTitle = 'Tambah User';
 $navTitle  = 'Tambah User';
 
