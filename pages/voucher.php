@@ -20,6 +20,21 @@ function getHarga(string $paket): ?int
     };
 }
 
+function getPrefix(string $paket): string
+{
+    return match ($paket) {
+        '4 jam','5 jam' => '5K',
+        'Mingguan' => '7D',
+        default => 'X'
+    };
+}
+
+function genereteUsername(string $paket): string
+{
+    $prefix = getPrefix($paket);
+    return $prefix . strtolower(bin2hex(random_bytes(2)));
+}
+
 function sessionTimeoutByPaket(string $paket): int
 {
     return match ($paket) {
@@ -109,8 +124,9 @@ if (isset($_POST['generate'])) {
         for ($i = 0; $i < $jumlah; $i++) {
 
             // generate user random
-            $user = "5K" . rand(1,9) . chr(rand(65,90)) . chr(rand(97,122));
-            $pass = (string) rand(1000,9999);
+            $prefix = getPrefix($paket);
+            $user = genereteUsername($paket);
+            $pass = (string) rand(1000, 9999);
 
             // cek duplikat
             $stmtDup->bind_param("ss", $user, $user);

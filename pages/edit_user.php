@@ -2,131 +2,150 @@
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
 
-$user = $_GET['user'] ?? "";
-
-/* cari user */
-if (isset($_GET['find'])) {
-    $user = $_GET['username'];
-}
+/* =======================
+   GET USER (FIX COMPAT)
+======================= */
+$user = $_GET['user'] ?? ($_GET['username'] ?? '');
+$user = trim($user);
 
 $password = "";
 $expiration = "";
+$current_profile = "";
 
-/* AMBIL DATA USER */
-if ($user != "") {
+/* =======================
+   FETCH USER
+======================= */
+if ($user !== "") {
 
     $stmt = $conn->prepare("
-    SELECT
-    username,
-    MAX(CASE WHEN attribute='Cleartext-Password' THEN value END) as password,
-    MAX(CASE WHEN attribute='Expiration' THEN value END) as expiration
-    FROM radcheck
-    WHERE LOWER(username)=LOWER(?)
-    AND attribute IN ('Cleartext-Password','Expiration')
-    LIMIT 1
+        SELECT
+            username,
+            MAX(CASE WHEN attribute='Cleartext-Password' THEN value END) as password,
+            MAX(CASE WHEN attribute='Expiration' THEN value END) as expiration
+        FROM radcheck
+        WHERE LOWER(username)=LOWER(?)
+        AND attribute IN ('Cleartext-Password','Expiration')
+        LIMIT 1
     ");
+
     $stmt->bind_param("s", $user);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $data = $result->fetch_assoc();
+    $data = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-    if (!$data || ($data['password'] === null && $data['expiration'] === null)) {
-
-        $user = ""; // biar form ga muncul
+    if (!$data) {
         $_SESSION['msg'] = [
             "type" => "danger",
             "text" => "User tidak ditemukan"
         ];
+        $user = "";
     } else {
-
-        $user = $data['username'] ?? $user; // tetap pakai casing original dari DB
-        $password = $data['password'] ?? "";
+        $user       = $data['username']; // pakai casing asli
+        $password   = $data['password'] ?? "";
         $expiration = $data['expiration'] ?? "";
     }
 
+    /* PROFILE */
+    $stmt = $conn->prepare("
+        SELECT groupname 
+        FROM radusergroup 
+        WHERE LOWER(username)=LOWER(?) 
+        LIMIT 1
+    ");
+    $stmt->bind_param("s", $user);
+    $stmt->execute();
+    $profile = $stmt->get_result()->fetch_assoc();
+    $current_profile = $profile['groupname'] ?? 'No Profile';
     $stmt->close();
-
-    /* FETCH CURRENT PROFILE (untuk display only - tidak diubah) */
-    $current_profile = '';
-    $stmt_profile = $conn->prepare("SELECT groupname FROM radusergroup WHERE BINARY username=? LIMIT 1");
-    if ($stmt_profile) {
-        $stmt_profile->bind_param("s", $user);
-        $stmt_profile->execute();
-        $profile_result = $stmt_profile->get_result();
-        $profile_data = $profile_result->fetch_assoc();
-        $current_profile = $profile_data['groupname'] ?? 'No Profile';
-        $stmt_profile->close();
-    }
 }
 
-/* SIMPAN PERUBAHAN */
+/* =======================
+   SAVE UPDATE
+======================= */
 if (isset($_POST['save'])) {
 
-    $user = $_POST['user'];
-    $password = $_POST['password'];
-    $expiration = $_POST['expiration'];
+    $user       = trim($_POST['user'] ?? '');
+    $password   = trim($_POST['password'] ?? '');
+    $expiration = trim($_POST['expiration'] ?? '');
 
-    /* PASSWORD */
-    if ($password != "") {
-
-        $cekPass = $conn->query("
-        SELECT * FROM radcheck 
-        WHERE BINARY username='$user' 
-        AND attribute='Cleartext-Password'
-        ");
-
-        if ($cekPass->num_rows > 0) {
-
-            $conn->query("
-            UPDATE radcheck 
-            SET value='$password' 
-            WHERE BINARY username='$user' 
-            AND attribute='Cleartext-Password'
-            ");
-        } else {
-
-            $conn->query("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES ('$user','Cleartext-Password',':=','$password')
-            ");
-        }
+    if ($user === '') {
+        $_SESSION['msg'] = [
+            "type" => "danger",
+            "text" => "User kosong"
+        ];
+        header("Location: edit_user");
+        exit;
     }
 
-    /* EXPIRATION */
-    if ($expiration != "") {
+    try {
+        $conn->begin_transaction();
 
-        $cekExp = $conn->query("
-        SELECT * FROM radcheck 
-        WHERE BINARY username='$user' 
-        AND attribute='Expiration'
-        ");
+        /* ===== PASSWORD ===== */
+        if ($password !== "") {
 
-        if ($cekExp->num_rows > 0) {
-
-            $conn->query("
-            UPDATE radcheck 
-            SET value='$expiration' 
-            WHERE BINARY username='$user' 
-            AND attribute='Expiration'
+            $stmt = $conn->prepare("
+                DELETE FROM radcheck 
+                WHERE username=? 
+                AND attribute='Cleartext-Password'
             ");
-        } else {
+            $stmt->bind_param("s", $user);
+            $stmt->execute();
+            $stmt->close();
 
-            $conn->query("
-            INSERT INTO radcheck (username,attribute,op,value)
-            VALUES ('$user','Expiration',':=','$expiration')
+            $stmt = $conn->prepare("
+                INSERT INTO radcheck (username,attribute,op,value)
+                VALUES (?, 'Cleartext-Password', ':=', ?)
             ");
+            $stmt->bind_param("ss", $user, $password);
+            $stmt->execute();
+            $stmt->close();
         }
+
+        /* ===== EXPIRATION ===== */
+        if ($expiration !== "") {
+
+            $stmt = $conn->prepare("
+                DELETE FROM radcheck 
+                WHERE username=? 
+                AND attribute='Expiration'
+            ");
+            $stmt->bind_param("s", $user);
+            $stmt->execute();
+            $stmt->close();
+
+            $stmt = $conn->prepare("
+                INSERT INTO radcheck (username,attribute,op,value)
+                VALUES (?, 'Expiration', ':=', ?)
+            ");
+            $stmt->bind_param("ss", $user, $expiration);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $conn->commit();
+
+        $_SESSION['msg'] = [
+            "type" => "success",
+            "text" => "User berhasil di update"
+        ];
+
+    } catch (Throwable $e) {
+
+        $conn->rollback();
+
+        $_SESSION['msg'] = [
+            "type" => "danger",
+            "text" => "Error: " . $e->getMessage()
+        ];
     }
 
-    $_SESSION['msg'] = [
-        "type" => "success",
-        "text" => "User berhasil di update"
-    ];
-
-    header("Location: edit_user?user=$user");
+    header("Location: edit_user?user=" . urlencode($user));
     exit;
 }
 
+/* =======================
+   VIEW
+======================= */
 $pageTitle = 'Edit User';
 $navTitle  = 'Edit User';
 

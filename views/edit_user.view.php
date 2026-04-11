@@ -42,7 +42,12 @@
 
             <div class="mb-3">
                 <label>Expiration</label>
-                <input name="expiration" value="<?php echo $expiration ?>" class="form-control">
+                <input name="expiration" value="<?php echo $expiration ?>" class="form-control" placeholder="Contoh: 08 May 2026 23:59">
+
+                <small class="form-text text-muted">+ Format wajib : <b>DD MMM    YYYY HH:MM</b>
+                    <br>+ Contoh : <b>08 May 2026 23:59</b>
+                    <br>+ Bulan harus dalam format bahasa Inggris : <b>Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec</b>  
+                 </small>
             </div>
 
             <button name="save" class="btn btn-success">Simpan</button>
