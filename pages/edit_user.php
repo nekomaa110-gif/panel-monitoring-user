@@ -2,8 +2,10 @@
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
 
+date_default_timezone_set('Asia/Jakarta');
+
 /* =======================
-   GET USER (FIX COMPAT)
+   GET USER
 ======================= */
 $user = $_GET['user'] ?? ($_GET['username'] ?? '');
 $user = trim($user);
@@ -40,7 +42,7 @@ if ($user !== "") {
         ];
         $user = "";
     } else {
-        $user       = $data['username']; // pakai casing asli
+        $user       = $data['username'];
         $password   = $data['password'] ?? "";
         $expiration = $data['expiration'] ?? "";
     }
@@ -85,7 +87,7 @@ if (isset($_POST['save'])) {
 
             $stmt = $conn->prepare("
                 DELETE FROM radcheck 
-                WHERE username=? 
+                WHERE LOWER(username)=LOWER(?) 
                 AND attribute='Cleartext-Password'
             ");
             $stmt->bind_param("s", $user);
@@ -104,9 +106,18 @@ if (isset($_POST['save'])) {
         /* ===== EXPIRATION ===== */
         if ($expiration !== "") {
 
+            // VALIDASI + NORMALISASI
+            $dt = DateTime::createFromFormat('d M Y H:i', $expiration);
+
+            if (!$dt) {
+                throw new Exception("Format Expiration salah. Contoh: 08 May 2026 23:59:59");
+            }
+
+            $expiration = $dt->format('d M Y H:i:s');
+
             $stmt = $conn->prepare("
                 DELETE FROM radcheck 
-                WHERE username=? 
+                WHERE LOWER(username)=LOWER(?) 
                 AND attribute='Expiration'
             ");
             $stmt->bind_param("s", $user);
