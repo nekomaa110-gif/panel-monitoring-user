@@ -18,8 +18,6 @@ $tables = [
     'radcheck' => "DELETE FROM radcheck WHERE BINARY username=?",
     'radreply' => "DELETE FROM radreply WHERE BINARY username=?",
     'radusergroup' => "DELETE FROM radusergroup WHERE BINARY username=?",
-    // radacct optional - boleh skip jika tidak ada session aktif
-    'radacct' => "DELETE FROM radacct WHERE BINARY username=?"
 ];
 
 $success_count = 0;
