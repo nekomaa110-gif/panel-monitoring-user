@@ -1,6 +1,7 @@
 <?php
 require "../core/auth.php";
 require "../config/db.php";
+require "../core/admin_log.php";
 
 $user   = trim($_GET['user'] ?? '');
 $search = $_GET['search'] ?? '';
@@ -65,9 +66,12 @@ try {
     $stmt->close();
 
     $conn->commit();
+    adminLogFile("DISABLE_USER", $user . "from group " . ($prevGroup ?: "unknown") . "->nonaktif");
 
 } catch (Throwable $e) {
     $conn->rollback();
+    adminLogFile("DISABLE_USER_FAILED",
+    $user . "error: " . $e->getMessage());
 }
 
 header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));

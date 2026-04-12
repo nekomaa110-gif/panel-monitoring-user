@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
+require __DIR__ . "/../core/admin_log.php";
 
 date_default_timezone_set('Asia/Jakarta');
 
@@ -155,6 +156,8 @@ if (isset($_POST['save'])) {
 
         $conn->commit();
 
+        adminLogFile("EDIT_USER", $user . " status = sucess");
+
         $_SESSION['msg'] = [
             "type" => "success",
             "text" => "User berhasil di update"
@@ -163,6 +166,8 @@ if (isset($_POST['save'])) {
     } catch (Throwable $e) {
 
         $conn->rollback();
+
+        adminLogFile("EDIT_USER_FAILED", $user . " status = failed: " . $e->getMessage());
         error_log($e->getMessage());
 
         $_SESSION['msg'] = [

@@ -9,9 +9,9 @@ RewriteRule ^actions/([a-zA-Z0-9*-]+)$ actions/$1.php [L]
 
 # route pages (INI YANG FIX)
 
-RewriteCond %{REQUEST*FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([a-zA-Z0-9*-]+)$ pages/$1.php [L]
+RewriteCond %{REQUEST\*FILENAME} !-f
+RewriteCond %{REQUEST\*FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9_-]+)$ pages/$1.php [L]
 
 <FilesMatch "(phpinfo|test|\.env|\.git)">
 Require all denied

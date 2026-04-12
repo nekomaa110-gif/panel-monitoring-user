@@ -1,6 +1,7 @@
 <?php
 require "../core/auth.php";
 require "../config/db.php";
+require "../core/admin_log.php";
 
 $user = trim($_GET['user'] ?? '');
 $search = $_GET['search'] ?? "";
@@ -29,7 +30,9 @@ try {
     }
 
     $conn->commit();
-
+    adminLogFile("DELETE_USER",
+    $user . " status = sucess");
+    
     $_SESSION['msg'] = [
         "type" => "success",
         "text" => "User berhasil dihapus"
@@ -39,9 +42,12 @@ try {
 
     $conn->rollback();
 
+    adminLogFile("DELETE_USER_FAILED",
+    $user . " status = failed: " . $e->getMessage());
+
     $_SESSION['msg'] = [
         "type" => "danger",
-        "text" => "Gagal hapus user"
+        "text" => "Gagal menghapus user: " . $e->getMessage()
     ];
 }
 

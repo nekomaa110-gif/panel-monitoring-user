@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
+require __DIR__ . "/../core/admin_log.php";
 
 date_default_timezone_set('Asia/Jakarta');
 
@@ -90,7 +91,6 @@ if (isset($_POST['save'])) {
             $dt = new DateTime();
             $dt->modify("+$hari days");
             $dt->setTime(23, 59, 59);
-
             $expiration = $dt->format('d M Y H:i:s');
 
             /* ===== INSERT PASSWORD ===== */
@@ -111,7 +111,7 @@ if (isset($_POST['save'])) {
             $stmt->execute();
             $stmt->close();
 
-            /* ===== PROFILE ===== */
+            /* ===== INSERT PROFILE ===== */
             $stmt = $conn->prepare("
                 INSERT INTO radusergroup (username,groupname,priority)
                 VALUES (?, ?, 0)
@@ -122,6 +122,12 @@ if (isset($_POST['save'])) {
 
             $conn->commit();
 
+            /* ===== LOG SUCCESS ===== */
+            adminLogFile(
+                "ADD_USER_SUCCESS",
+                $username . " | profile=" . $profile . " | days=" . $hari
+            );
+
             $msg = [
                 "type" => "success",
                 "text" => "User berhasil dibuat"
@@ -130,6 +136,12 @@ if (isset($_POST['save'])) {
         } catch (Throwable $e) {
 
             $conn->rollback();
+
+            /* ===== LOG FAILED ===== */
+            adminLogFile(
+                "ADD_USER_FAILED",
+                ($username ?: 'unknown') . " | error=" . $e->getMessage()
+            );
 
             $msg = [
                 "type" => "danger",
