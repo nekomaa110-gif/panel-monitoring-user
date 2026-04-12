@@ -17,6 +17,8 @@ $page = basename($_SERVER['PHP_SELF'], '.php');
 
     <a href="voucher" class="<?= $page == 'voucher' ? 'active' : '' ?>">Voucher</a>
 
+    <a href="record" class="<?= $page == 'record' ? 'active' : '' ?>">Record User</a>
+
     <a href="log" class="<?= $page == 'log' ? 'active' : '' ?>">Log</a>
 
 </div>
