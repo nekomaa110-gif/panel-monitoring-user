@@ -107,7 +107,7 @@ if (isset($_POST['save'])) {
         if ($expiration !== "") {
 
             // VALIDASI + NORMALISASI
-            $dt = DateTime::createFromFormat('d M Y H:i', $expiration);
+            $dt = DateTime::createFromFormat('d M Y H:i:s', $expiration);
 
             if (!$dt) {
                 throw new Exception("Format Expiration salah. Contoh: 08 May 2026 23:59:59");
