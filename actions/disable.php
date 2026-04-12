@@ -2,59 +2,73 @@
 require "../core/auth.php";
 require "../config/db.php";
 
-$user   = $_GET['user'] ?? '';
+$user   = trim($_GET['user'] ?? '');
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? '';
 
-if ($user == "") {
+if ($user === '') {
     die("username kosong");
 }
 
-// ambil profile aktif terakhir user (selain group disabled)
-$prevGroup = '';
-$stmtPrev = $conn->prepare("
-    SELECT groupname
-    FROM radusergroup
-    WHERE BINARY username=? AND groupname <> 'nonaktif'
-    ORDER BY priority ASC
-    LIMIT 1
-");
-$stmtPrev->bind_param("s", $user);
-$stmtPrev->execute();
-$resPrev = $stmtPrev->get_result();
-if ($rowPrev = $resPrev->fetch_assoc()) {
-    $prevGroup = $rowPrev['groupname'] ?? '';
-}
+try {
+    $conn->begin_transaction();
 
-// simpan metadata previous group ke voucher teractive (jika user berasal dari voucher)
-if (!empty($prevGroup)) {
-    $statusMeta = "PREV_GROUP:" . $prevGroup;
-    $stmtSaveMeta = $conn->prepare("
-        UPDATE voucher
-        SET status=?
-        WHERE username=?
-        ORDER BY id DESC
+    /* ambil group lama */
+    $prevGroup = '';
+    $stmt = $conn->prepare("
+        SELECT groupname
+        FROM radusergroup
+        WHERE LOWER(username)=LOWER(?) 
+          AND groupname <> 'nonaktif'
+        ORDER BY priority ASC
         LIMIT 1
     ");
-    $stmtSaveMeta->bind_param("ss", $statusMeta, $user);
-    $stmtSaveMeta->execute();
+    $stmt->bind_param("s", $user);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($row = $res->fetch_assoc()) {
+        $prevGroup = $row['groupname'];
+    }
+    $stmt->close();
+
+    /* simpan metadata */
+    if ($prevGroup) {
+        $meta = "PREV_GROUP:" . $prevGroup;
+        $stmt = $conn->prepare("
+            UPDATE voucher
+            SET status=?
+            WHERE username=?
+            AND (status IS NULL OR status='')
+        ");
+        $stmt->bind_param("ss", $meta, $user);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    /* hapus semua group */
+    $stmt = $conn->prepare("
+        DELETE FROM radusergroup
+        WHERE LOWER(username)=LOWER(?)
+    ");
+    $stmt->bind_param("s", $user);
+    $stmt->execute();
+    $stmt->close();
+
+    /* insert nonaktif */
+    $stmt = $conn->prepare("
+        INSERT INTO radusergroup (username,groupname,priority)
+        VALUES (?, 'nonaktif', 0)
+    ");
+    $stmt->bind_param("s", $user);
+    $stmt->execute();
+    $stmt->close();
+
+    $conn->commit();
+
+} catch (Throwable $e) {
+    $conn->rollback();
 }
-
-/* hapus group lama */
-$stmtDelete = $conn->prepare("
-    DELETE FROM radusergroup
-    WHERE BINARY username=?
-");
-$stmtDelete->bind_param("s", $user);
-$stmtDelete->execute();
-
-/* masukkan ke group disabled */
-$stmtDisable = $conn->prepare("
-    INSERT INTO radusergroup (username,groupname,priority)
-    VALUES (?, 'nonaktif', 0)
-");
-$stmtDisable->bind_param("s", $user);
-$stmtDisable->execute();
 
 header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));
 exit;

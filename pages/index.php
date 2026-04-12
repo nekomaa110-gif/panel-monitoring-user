@@ -2,41 +2,85 @@
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
 
-/* TOTAL USER */
+/* =========================
+   TOTAL USER (UNION BIAR VALID)
+========================= */
 $total = $conn->query("
+SELECT COUNT(DISTINCT username) as t FROM (
+    SELECT username FROM radcheck
+    UNION
+    SELECT username FROM radusergroup
+) u
+")->fetch_assoc()['t'];
+
+/* =========================
+   USER EXPIRED
+========================= */
+$expired = $conn->query("
 SELECT COUNT(DISTINCT username) as t
 FROM radcheck
-")->fetch_assoc()['t'];
-
-/* USER EXPIRED */
-$expired = $conn->query("
-SELECT COUNT(*) as t FROM radcheck
 WHERE attribute='Expiration'
-AND STR_TO_DATE(value,'%d %b %Y %H:%i') < NOW()
+AND STR_TO_DATE(value,'%d %b %Y %H:%i:%s') <= NOW()
 ")->fetch_assoc()['t'];
 
-/* USER DISABLED */
+/* =========================
+   USER DISABLED
+========================= */
 $disabled = $conn->query("
-SELECT COUNT(*) as t FROM radusergroup
+SELECT COUNT(DISTINCT username) as t
+FROM radusergroup
 WHERE groupname='nonaktif'
 ")->fetch_assoc()['t'];
 
-/* USER ONLINE */
+/* =========================
+   USER ONLINE (SAMA PERSIS DENGAN users.php)
+========================= */
 $online = $conn->query("
-SELECT COUNT(*) as t
-FROM radacct
-WHERE acctstoptime IS NULL
+SELECT COUNT(DISTINCT ra.username) as t
+FROM radacct ra
+WHERE ra.acctstoptime IS NULL
+
+AND NOT EXISTS (
+    SELECT 1 FROM radusergroup rg
+    WHERE rg.username = ra.username
+    AND rg.groupname = 'nonaktif'
+)
+
+AND NOT EXISTS (
+    SELECT 1 FROM radcheck rc
+    WHERE rc.username = ra.username
+    AND rc.attribute = 'Expiration'
+    AND STR_TO_DATE(rc.value,'%d %b %Y %H:%i:%s') <= NOW()
+)
 ")->fetch_assoc()['t'];
 
-/* USER ONLINE LIST */
+/* =========================
+   USER ONLINE LIST (VALID)
+========================= */
 $online_list = $conn->query("
-SELECT username,framedipaddress,acctstarttime
-FROM radacct
-WHERE acctstoptime IS NULL
-ORDER BY acctstarttime DESC
+SELECT ra.username, ra.framedipaddress, ra.acctstarttime
+FROM radacct ra
+WHERE ra.acctstoptime IS NULL
+
+AND NOT EXISTS (
+    SELECT 1 FROM radusergroup rg
+    WHERE rg.username = ra.username
+    AND rg.groupname = 'nonaktif'
+)
+
+AND NOT EXISTS (
+    SELECT 1 FROM radcheck rc
+    WHERE rc.username = ra.username
+    AND rc.attribute = 'Expiration'
+    AND STR_TO_DATE(rc.value,'%d %b %Y %H:%i:%s') <= NOW()
+)
+
+ORDER BY ra.acctstarttime DESC
 ");
 
-/* LOGIN TERAKHIR */
+/* =========================
+   LOGIN TERAKHIR
+========================= */
 $log = $conn->query("
 SELECT username,nasipaddress,acctstarttime
 FROM radacct

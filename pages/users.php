@@ -2,28 +2,71 @@
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
 
-$search = $_GET['search'] ?? "";
+$search = trim($_GET['search'] ?? "");
 $filter = $_GET['filter'] ?? "";
 
 /* =========================
-   USER ONLINE
+   USER ONLINE (SOURCE OF TRUTH)
 ========================= */
 $onlineUsers = [];
 
 $online_q = $conn->query("
-SELECT DISTINCT username
-FROM radacct
-WHERE acctstoptime IS NULL
+SELECT DISTINCT ra.username
+FROM radacct ra
+WHERE ra.acctstoptime IS NULL
+
+AND NOT EXISTS (
+    SELECT 1 FROM radusergroup rg
+    WHERE rg.username = ra.username
+    AND rg.groupname = 'nonaktif'
+)
+
+AND NOT EXISTS (
+    SELECT 1 FROM radcheck rc
+    WHERE rc.username = ra.username
+    AND rc.attribute = 'Expiration'
+    AND STR_TO_DATE(rc.value,'%d %b %Y %H:%i:%s') <= NOW()
+)
 ");
 
-while ($o = $online_q->fetch_assoc()) {
-    $onlineUsers[$o['username']] = true;
+if ($online_q) {
+    while ($o = $online_q->fetch_assoc()) {
+        $onlineUsers[$o['username']] = true;
+    }
+}
+
+/* =========================
+   COUNT ONLINE (SYNC DASHBOARD)
+========================= */
+$onlineCount = 0;
+
+$count_q = $conn->query("
+SELECT COUNT(DISTINCT ra.username) as total
+FROM radacct ra
+WHERE ra.acctstoptime IS NULL
+
+AND NOT EXISTS (
+    SELECT 1 FROM radusergroup rg
+    WHERE rg.username = ra.username
+    AND rg.groupname = 'nonaktif'
+)
+
+AND NOT EXISTS (
+    SELECT 1 FROM radcheck rc
+    WHERE rc.username = ra.username
+    AND rc.attribute = 'Expiration'
+    AND STR_TO_DATE(rc.value,'%d %b %Y %H:%i:%s') <= NOW()
+)
+");
+
+if ($count_q) {
+    $row = $count_q->fetch_assoc();
+    $onlineCount = $row['total'] ?? 0;
 }
 
 /* =========================
    AMBIL DATA USER
 ========================= */
-
 $stmtUsers = $conn->prepare("
 SELECT
     u.username,
@@ -58,12 +101,12 @@ LEFT JOIN (
         FROM radusergroup
         GROUP BY username
     ) r2 
-    ON r1.username = r2.username 
+    ON r1.username = r2.username
     AND r1.priority = r2.min_priority
 ) rg 
     ON rg.username = u.username
 
-WHERE LOWER(u.username) LIKE LOWER(?)
+WHERE u.username LIKE ?
   AND u.username NOT LIKE '5K%'
 
 GROUP BY u.username
@@ -78,7 +121,6 @@ $q = $stmtUsers->get_result();
 /* =========================
    VIEW
 ========================= */
-
 $pageTitle = 'Pelanggan';
 $navTitle  = 'Pelanggan';
 

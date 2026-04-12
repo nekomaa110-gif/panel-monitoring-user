@@ -1,6 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 require "../core/auth.php";
 require "../config/db.php";
 
@@ -14,40 +12,36 @@ if ($user === '') {
     exit;
 }
 
-$tables = [
-    'radcheck' => "DELETE FROM radcheck WHERE BINARY username=?",
-    'radreply' => "DELETE FROM radreply WHERE BINARY username=?",
-    'radusergroup' => "DELETE FROM radusergroup WHERE BINARY username=?",
-];
+try {
+    $conn->begin_transaction();
 
-$success_count = 0;
-$errors = [];
+    $tables = [
+        "DELETE FROM radcheck WHERE LOWER(username)=LOWER(?)",
+        "DELETE FROM radreply WHERE LOWER(username)=LOWER(?)",
+        "DELETE FROM radusergroup WHERE LOWER(username)=LOWER(?)",
+    ];
 
-foreach ($tables as $table => $sql) {
-    $stmt = $conn->prepare($sql);
-    if ($stmt) {
+    foreach ($tables as $sql) {
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $user);
         $stmt->execute();
-        $affected = $stmt->affected_rows;
-        if ($affected > 0) {
-            $success_count++;
-        }
         $stmt->close();
-    } else {
-        // Skip tables that don't exist (no error)
-        error_log("Delete user $user: Table $table not found - " . $conn->error);
     }
-}
 
-if ($success_count > 0) {
+    $conn->commit();
+
     $_SESSION['msg'] = [
-        "type" => "success", 
-        "text" => "User '$user' berhasil dihapus dari $success_count tabel utama"
+        "type" => "success",
+        "text" => "User berhasil dihapus"
     ];
-} else {
+
+} catch (Throwable $e) {
+
+    $conn->rollback();
+
     $_SESSION['msg'] = [
-        "type" => "danger", 
-        "text" => "Gagal hapus user. Error: " . implode('; ', $errors)
+        "type" => "danger",
+        "text" => "Gagal hapus user"
     ];
 }
 
