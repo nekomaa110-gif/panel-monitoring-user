@@ -1,15 +1,17 @@
 <?php include __DIR__ . "/layout/header.php"; ?>
-
 <?php include __DIR__ . "/layout/sidebar.php"; ?>
-
 <?php include __DIR__ . "/layout/navbar.php"; ?>
 
 <div class="content p-4">
 
-    <h3 class="mb-4">Tambah User active</h3>
+    <h3 class="mb-4">Tambah User Active</h3>
 
-    <?php if ($msg) { ?>
-        <div class="alert alert-info"><?php echo $msg ?></div>
+    <!-- NOTIF -->
+    <?php if (!empty($msg) && is_array($msg)) { ?>
+        <div class="alert alert-<?php echo $msg['type']; ?> alert-dismissible fade show">
+            <?php echo htmlspecialchars($msg['text']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     <?php } ?>
 
     <form method="POST">
@@ -17,13 +19,22 @@
         <!-- USERNAME -->
         <div class="mb-3">
             <label>Username</label>
-            <input name="username" class="form-control" required>
+            <input 
+                name="username"
+                class="form-control"
+                required
+                value="<?php echo htmlspecialchars($_POST['username'] ?? '') ?>"
+                placeholder="contoh: user01 (tanpa spasi)">
         </div>
 
         <!-- PASSWORD -->
         <div class="mb-3">
             <label>Password</label>
-            <input name="password" class="form-control" required>
+            <input 
+                name="password"
+                class="form-control"
+                required
+                value="<?php echo htmlspecialchars($_POST['password'] ?? '') ?>">
         </div>
 
         <!-- PROFIL -->
@@ -31,21 +42,30 @@
             <label>Profil</label>
 
             <select name="profile" class="form-control" required>
-
-                <?php while ($p = $profiles->fetch_assoc()) { ?>
-                    <option value="<?php echo $p['groupname']; ?>">
-                        <?php echo $p['groupname']; ?>
+                <?php 
+                $selectedProfile = $_POST['profile'] ?? '';
+                while ($p = $profiles->fetch_assoc()) { 
+                ?>
+                    <option 
+                        value="<?php echo htmlspecialchars($p['groupname']); ?>"
+                        <?php if ($selectedProfile == $p['groupname']) echo 'selected'; ?>
+                    >
+                        <?php echo htmlspecialchars($p['groupname']); ?>
                     </option>
                 <?php } ?>
-
             </select>
-
         </div>
 
         <!-- MASA AKTIF -->
         <div class="mb-3">
             <label>Masa Aktif (Hari)</label>
-            <input type="number" name="hari" value="30" class="form-control">
+            <input 
+                type="number"
+                name="hari"
+                class="form-control"
+                value="<?php echo htmlspecialchars($_POST['hari'] ?? 30) ?>"
+                min="1"
+                max="3650">
         </div>
 
         <button name="save" class="btn btn-primary w-100">

@@ -2,7 +2,9 @@
 require __DIR__ . "/../core/auth.php";
 require __DIR__ . "/../config/db.php";
 
-$msg = "";
+date_default_timezone_set('Asia/Jakarta');
+
+$msg = [];
 
 /* =======================
    AMBIL SEMUA PROFIL
@@ -26,18 +28,41 @@ if (isset($_POST['save'])) {
     $hari     = (int)($_POST['hari'] ?? 0);
     $profile  = trim($_POST['profile'] ?? '');
 
+    /* ===== VALIDASI ===== */
     if ($username === '' || $password === '' || $profile === '' || $hari <= 0) {
-        $msg = "Isi semua field dengan benar!";
-    } else {
+        $msg = [
+            "type" => "danger",
+            "text" => "Isi semua field dengan benar!"
+        ];
+    }
+
+    elseif (!preg_match('/^[a-zA-Z0-9._-]{3,32}$/', $username)) {
+        $msg = [
+            "type" => "danger",
+            "text" => "Username tidak valid!"
+        ];
+    }
+
+    elseif ($hari > 3650) {
+        $msg = [
+            "type" => "warning",
+            "text" => "Durasi terlalu panjang!"
+        ];
+    }
+
+    else {
 
         try {
             $conn->begin_transaction();
 
-            /* ===== CEK DUPLIKAT ===== */
+            /* ===== CEK USER ===== */
             $stmt = $conn->prepare("
-                SELECT 1 FROM radcheck WHERE username=? LIMIT 1
+                SELECT username FROM radcheck WHERE username=?
+                UNION
+                SELECT username FROM radusergroup WHERE username=?
+                LIMIT 1
             ");
-            $stmt->bind_param("s", $username);
+            $stmt->bind_param("ss", $username, $username);
             $stmt->execute();
 
             if ($stmt->get_result()->fetch_assoc()) {
@@ -45,7 +70,23 @@ if (isset($_POST['save'])) {
             }
             $stmt->close();
 
-            /* ===== HITUNG EXPIRATION (PASTI 23:59:59) ===== */
+            /* ===== CEK PROFILE ===== */
+            $stmt = $conn->prepare("
+                SELECT 1 FROM (
+                    SELECT groupname FROM radgroupcheck
+                    UNION
+                    SELECT groupname FROM radgroupreply
+                ) g WHERE groupname=? LIMIT 1
+            ");
+            $stmt->bind_param("s", $profile);
+            $stmt->execute();
+
+            if (!$stmt->get_result()->fetch_assoc()) {
+                throw new Exception("Profile tidak valid!");
+            }
+            $stmt->close();
+
+            /* ===== EXPIRATION ===== */
             $dt = new DateTime();
             $dt->modify("+$hari days");
             $dt->setTime(23, 59, 59);
@@ -70,7 +111,7 @@ if (isset($_POST['save'])) {
             $stmt->execute();
             $stmt->close();
 
-            /* ===== ASSIGN PROFILE ===== */
+            /* ===== PROFILE ===== */
             $stmt = $conn->prepare("
                 INSERT INTO radusergroup (username,groupname,priority)
                 VALUES (?, ?, 0)
@@ -81,12 +122,21 @@ if (isset($_POST['save'])) {
 
             $conn->commit();
 
-            $msg = "User berhasil dibuat";
+            $msg = [
+                "type" => "success",
+                "text" => "User berhasil dibuat"
+            ];
 
         } catch (Throwable $e) {
 
             $conn->rollback();
-            $msg = "Error: " . $e->getMessage();
+
+            $msg = [
+                "type" => "danger",
+                "text" => $e->getMessage() === "User sudah ada!"
+                    ? "User sudah ada!"
+                    : "Gagal membuat user!"
+            ];
         }
     }
 }
