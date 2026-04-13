@@ -156,7 +156,9 @@ if (isset($_POST['save'])) {
 
         $conn->commit();
 
-        adminLogFile("EDIT_USER", $user . " status = sucess");
+        adminLogFile(
+            "EDIT USER", $user, "success"
+        );
 
         $_SESSION['msg'] = [
             "type" => "success",
@@ -167,8 +169,9 @@ if (isset($_POST['save'])) {
 
         $conn->rollback();
 
-        adminLogFile("EDIT_USER_FAILED", $user . " status = failed: " . $e->getMessage());
-        error_log($e->getMessage());
+        adminLogFile(
+            "EDIT USER", $user, "Gagal"
+        );
 
         $_SESSION['msg'] = [
             "type" => "danger",

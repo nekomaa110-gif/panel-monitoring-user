@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . "/../core/auth.php";
 
-$logFile = __DIR__ . '/../core/admin.log.php';
+$logFile = __DIR__ . "/../core/admin.log";
 $logs = [];
 
 if (file_exists($logFile)) {

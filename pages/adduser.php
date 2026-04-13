@@ -124,8 +124,7 @@ if (isset($_POST['save'])) {
 
             /* ===== LOG SUCCESS ===== */
             adminLogFile(
-                "ADD_USER_SUCCESS",
-                $username . " | profile=" . $profile . " | days=" . $hari
+                "TAMBAH USER", $username, "success"
             );
 
             $msg = [
@@ -138,9 +137,8 @@ if (isset($_POST['save'])) {
             $conn->rollback();
 
             /* ===== LOG FAILED ===== */
-            adminLogFile(
-                "ADD_USER_FAILED",
-                ($username ?: 'unknown') . " | error=" . $e->getMessage()
+           adminLogFile(
+                "TAMBAH USER", $username ?? 'unknown', "Gagal"
             );
 
             $msg = [

@@ -1,3 +1,4 @@
 config/db.php
 TODO.MD
 .htaccess
+core/admin.log

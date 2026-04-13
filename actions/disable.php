@@ -66,12 +66,15 @@ try {
     $stmt->close();
 
     $conn->commit();
-    adminLogFile("DISABLE_USER", $user . "from group " . ($prevGroup ?: "unknown") . "->nonaktif");
+    adminLogFile(
+        "NONAKTIFKAN USER", $user, "success"
+    );
 
 } catch (Throwable $e) {
     $conn->rollback();
-    adminLogFile("DISABLE_USER_FAILED",
-    $user . "error: " . $e->getMessage());
+    adminLogFile(
+        "NONAKTIFKAN USER", $user, "Gagal"
+    );
 }
 
 header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));

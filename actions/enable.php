@@ -67,12 +67,15 @@ try {
     $stmt->close();
 
     $conn->commit();
-
-    adminLogFile("ENABLE_USER", $user . " status = sucess");
+    adminLogFile(
+    "AKTIFKAN USER", $user, "success"
+);
 
 } catch (Throwable $e) {
     $conn->rollback();
-    adminLogFile("ENABLE_USER_FAILED", $user . " status = failed: " . $e->getMessage());
+   adminLogFile(
+    "AKTIFKAN USER", $user, "Gagal"
+);
 }
 
 header("Location: /zeronet/users?search=" . urlencode($search) . "&filter=" . urlencode($filter));

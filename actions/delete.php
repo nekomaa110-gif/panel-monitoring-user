@@ -30,8 +30,7 @@ try {
     }
 
     $conn->commit();
-    adminLogFile("DELETE_USER",
-    $user . " status = sucess");
+    adminLogFile("HAPUS USER", $user, "success");
     
     $_SESSION['msg'] = [
         "type" => "success",
@@ -42,8 +41,7 @@ try {
 
     $conn->rollback();
 
-    adminLogFile("DELETE_USER_FAILED",
-    $user . " status = failed: " . $e->getMessage());
+    adminLogFile("HAPUS USER", $user, "Gagal");
 
     $_SESSION['msg'] = [
         "type" => "danger",
